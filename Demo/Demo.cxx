@@ -1,148 +1,111 @@
 // A simple demonstration application using Scintilla
-#include <stdio.h>
+#define SDL_MAIN_HANDLED
+
 #include "ShaderEditOverlay.h"
 #include <SDL.h>
 #include <SDL_syswm.h>
-#include <gl/glee.h>
-
-char fragmentSource[65536] = "void main()\n{\n\tgl_FragColor=vec4(0, 1, 0, 1);\n}\n";
+#include <iostream>
+#include <stdio.h>
 
 static ShaderEditOverlay app;
 
 void Platform_Initialise(HWND hWnd);
 void Platform_Finalise();
 
-GLuint program;
-char errbuf[65536];
-
-GLuint CompileProgram(GLint srcLen, const char* src, GLint errbufLen, char* errbuf)
+int main()
 {
-	GLuint prg = glCreateProgram();
-	GLuint shd = glCreateShader(GL_FRAGMENT_SHADER);
-	GLint size = 0, result = 0;
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) // Init The SDL Library, The VIDEO Subsystem
+    {
+        return 0; // Get Out Of Here. Sorry.
+    }
 
-	glShaderSource(shd, 1, &src, &srcLen);
-	glCompileShader(shd);
-	glGetShaderInfoLog(shd, errbufLen, &size, errbuf);
-	glGetShaderiv(shd, GL_COMPILE_STATUS, &result);
-	if (!result) goto onError;
+    auto window = SDL_CreateWindow("ScintillaGL", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 768, SDL_WINDOW_OPENGL);
+    if (window == 0)
+    {
+        std::cout << "Failed to create SDL2 window" << std::endl;
 
-	glAttachShader(prg, shd);
-	glLinkProgram(prg);
-	glGetProgramInfoLog(prg, errbufLen-size, &size, errbuf+size);
-	glGetProgramiv(prg, GL_LINK_STATUS, &result);
-	if (result) goto onSuccess;
+        SDL_Quit();
 
-onError:
-	glDeleteProgram(prg);
-	prg = 0;
+        return 1;
+    }
 
-onSuccess:
-	glDeleteShader(shd);
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
 
-	return prg;
-}
+    auto context = SDL_GL_CreateContext(window);
+    if (context == NULL)
+    {
+        std::cout << "Failed to create SDL2 GL context" << std::endl;
 
-int main(int /*argc*/, char** /*argv*/)
-{
-	SDL_Surface* mScreen;
+        SDL_Quit();
 
-	if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_TIMER)<0)											// Init The SDL Library, The VIDEO Subsystem
-	{
-		return 0;															// Get Out Of Here. Sorry.
-	}
+        return 1;
+    }
 
-	uint32_t flags = SDL_HWSURFACE|SDL_OPENGLBLIT;									// We Want A Hardware Surface And Special OpenGLBlit Mode
+    SDL_GL_MakeCurrent(window, context);
 
-	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8 );								// In order to use SDL_OPENGLBLIT we have to
-	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 8 );							// set GL attributes first
-	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 8 );
-	SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 8 );
-	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 24 );
-	SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8 );
-	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, TRUE );							// colors and doublebuffering
+    if (!gladLoadGL())
+    {
+        std::cout << "Failed to initialize OpenGL context" << std::endl;
 
-	mScreen = SDL_SetVideoMode(800, 600, 32, flags);
-	if (!mScreen)
-	{
-		SDL_Quit();
-		return 0;															// And Exit
-	}
-	
-	SDL_EnableUNICODE(TRUE);
-	SDL_EnableKeyRepeat(500, 100);
+        SDL_Quit();
 
-	SDL_SysWMinfo info = {{0, 0}, 0, 0};
-	SDL_GetWMInfo(&info);
+        return 1;
+    }
 
-	Platform_Initialise(info.window);
+    SDL_SysWMinfo systemInfo;
+    SDL_VERSION(&systemInfo.version);
 
-	app.initialise(800, 600);
+    if (SDL_GetWindowWMInfo(window, &systemInfo) != 1)
+    {
+        return 1;
+    }
 
-	program = CompileProgram(strlen(fragmentSource), fragmentSource, sizeof(errbuf), errbuf);
+    Platform_Initialise(systemInfo.info.win.window);
 
-	app.addPrograms(1, &program);
-	Scintilla_LinkLexers();
+    app.initialise(1024, 768);
 
-	bool run = true;
-	bool visible = false;
+    Scintilla_LinkLexers();
 
-	while (run)
-	{
-		SDL_Event	E;
-		while (SDL_PollEvent(&E))
-		{
-			if (E.type==SDL_QUIT) run=false;
-			else if (E.type == SDL_KEYDOWN)
-			{
-				if (E.key.keysym.sym==SDLK_ESCAPE) run=false;
+    bool run = true;
 
-				if (E.key.keysym.sym==SDLK_F5)
-				{
-					visible = !visible;
-					if (visible)
-					{
-						app.reset();
-					}
-				}
-				
-				if (!visible) continue;
-				app.handleKeyDown(E.key);
-			}
-		}
+    while (run)
+    {
+        SDL_Event E;
+        while (SDL_PollEvent(&E))
+        {
+            if (E.type == SDL_QUIT)
+                run = false;
+            else if (E.type == SDL_TEXTINPUT)
+            {
+                app.handleTextInput(E.text);
+            }
+            else if (E.type == SDL_KEYDOWN)
+            {
+                if (E.key.keysym.sym == SDLK_ESCAPE) run = false;
 
-		glClearColor(0.08f, 0.18f, 0.18f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT|GL_STENCIL_BUFFER_BIT);
-		
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
+                app.handleKeyDown(E.key);
+            }
+        }
 
-		glUseProgram(program);
-		glColor4f(0.0f, 1.0f, 0.0f, 1.0f);
-		glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 0.0f); glVertex2f(-0.80f, -0.80f);
-		glTexCoord2f(1.0f, 0.0f); glVertex2f( 0.80f, -0.80f);
-		glTexCoord2f(1.0f, 1.0f); glVertex2f( 0.80f,  0.80f);
-		glTexCoord2f(0.0f, 1.0f); glVertex2f(-0.80f,  0.80f);
-		glEnd();
-		glUseProgram(0);
+        glClearColor(0.08f, 0.18f, 0.18f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		if (visible)
-		{
-			app.renderFullscreen();
-		}
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
 
-		SDL_GL_SwapBuffers();
+        app.renderFullscreen();
 
-	}
+        SDL_GL_SwapWindow(window);
+    }
 
-	if (program) glDeleteProgram(program);
+    Platform_Finalise();
 
-	Platform_Finalise();
+    SDL_Quit();
 
-	SDL_Quit();
-
-	return 0;
+    return 0;
 }

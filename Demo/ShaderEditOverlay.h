@@ -1,6 +1,9 @@
 #pragma once
 
+
+
 #include <new>
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -8,12 +11,13 @@
 #include <ctype.h>
 #include <time.h>
 
+
 #include <string>
 #include <vector>
 #include <map>
 
 #include <SDL.h>
-#include <gl/GLee.h>
+#include <glad/glad.h>
 
 #include "Platform.h"
 
@@ -33,16 +37,18 @@
 #include "ViewStyle.h"
 #include "Decoration.h"
 #include "CharClassify.h"
+
+
 #include "Document.h"
 #include "Selection.h"
 #include "PositionCache.h"
 #include "Editor.h"
+
 #include "UniConversion.h"
 
 #include "SciLexer.h"
 #include "LexerModule.h"
-#include "SciLexer.h"
-#include "LexerModule.h"
+
 #include "Catalogue.h"
 
 class LexState;
@@ -50,58 +56,38 @@ class LexState;
 class ShaderEditOverlay
 {
 public:
-	ShaderEditOverlay();
-	~ShaderEditOverlay();
+    ShaderEditOverlay();
+    ~ShaderEditOverlay();
 
-	void initialise(int w, int h);
-	void reset();
+    void initialise(int w, int h);
+    void reset();
 
-	void handleKeyDown(SDL_KeyboardEvent& event);
-	void renderFullscreen();
+    void handleKeyDown(SDL_KeyboardEvent &event);
+    void handleTextInput(SDL_TextInputEvent &event);
+    void renderFullscreen();
 
-	bool requireReset() {bool prevValue=mRequireReset; mRequireReset = false; return prevValue;}
-
-	void addPrograms(size_t count, GLuint* programs);
-
-private:
-	void initialiseShaderEditor();
-	void initialiseDebugOutputView();
-	void initialiseSelectionList();
-
-	void saveShaderSource();
-	void compileProgram();
-	void fillListWithShaders();
-	void fillListWithPrograms();
-	void loadShaderSource();
+    bool requireReset()
+    {
+        bool prevValue = mRequireReset;
+        mRequireReset = false;
+        return prevValue;
+    }
 
 private:
-	enum ModesEnum
-	{
-		SELMODE_PROGRAM_LIST,
-		SELMODE_SHADER_LIST
-	};
+    void initialiseShaderEditor();
 
 private:
-	static const size_t TICK_INTERVAL = 100;
+    static const size_t TICK_INTERVAL = 100;
 
-	bool   mRequireReset;
+    bool mRequireReset = false;
 
-	size_t mNextTick;
+    size_t mNextTick = 0;
 
-	ModesEnum mSelectionMode;
-	GLuint    mSelectedProgram;
-	GLuint    mSelectedShader;
+    LexState *mLexer = nullptr;
 
-	std::vector<GLuint> mPrograms;
-	std::vector<GLuint> mAttachedShaders;
+    Editor mShaderEditor;
+    Editor *mActiveEditor = nullptr;
 
-	LexState* mLexer;
-
-	Editor  mShaderEditor;
-	Editor  mDebugOutputView;
-	Editor  mSelectionList;
-	Editor* mActiveEditor;
-
-	float mWidth;
-	float mHeight;
+    float mWidth = 0.0f;
+    float mHeight = 0.0f;
 };
