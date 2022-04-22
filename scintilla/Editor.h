@@ -532,7 +532,10 @@ public:
 	int  KeyDown(int key, bool shift, bool ctrl, bool alt, bool *consumed=0);
 	int  KeyDownWithModifiers(int key, int modifiers, bool *consumed);
 	void AddChar(char ch);
-	void AddCharUTF(char *s, unsigned int len);
+    void AddCharUTF(char *s, unsigned int len);
+    void StartSelectionxy(int x, int y);
+    void ChangeSelectionxy(int x, int y);
+    void ScrollY(int amount);
 
 	sptr_t Command(unsigned int iMessage, uptr_t wParam=0, sptr_t lParam=0);
 

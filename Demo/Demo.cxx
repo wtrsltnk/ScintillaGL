@@ -12,6 +12,8 @@ static ShaderEditOverlay app;
 void Platform_Initialise(HWND hWnd);
 void Platform_Finalise();
 
+int w = 1024, h = 768;
+
 int main()
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) // Init The SDL Library, The VIDEO Subsystem
@@ -19,7 +21,7 @@ int main()
         return 0; // Get Out Of Here. Sorry.
     }
 
-    auto window = SDL_CreateWindow("ScintillaGL", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 768, SDL_WINDOW_OPENGL);
+    auto window = SDL_CreateWindow("ScintillaGL", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (window == 0)
     {
         std::cout << "Failed to create SDL2 window" << std::endl;
@@ -65,19 +67,30 @@ int main()
 
     Platform_Initialise(systemInfo.info.win.window);
 
-    app.initialise(1024, 768);
+    app.initialise(w, h);
 
     Scintilla_LinkLexers();
 
     bool run = true;
 
+    bool needRender = false;
     while (run)
     {
         SDL_Event E;
         while (SDL_PollEvent(&E))
         {
             if (E.type == SDL_QUIT)
+            {
                 run = false;
+            }
+            else if (E.type == SDL_MOUSEBUTTONDOWN)
+            {
+                app.handleMouseButtonInput(E.button);
+            }
+            else if (E.type == SDL_MOUSEMOTION)
+            {
+                app.handleMouseMotionInput(E.motion);
+            }
             else if (E.type == SDL_TEXTINPUT)
             {
                 app.handleTextInput(E.text);
@@ -88,19 +101,41 @@ int main()
 
                 app.handleKeyDown(E.key);
             }
+            else if (E.type == SDL_MOUSEWHEEL)
+            {
+                app.handleMouseWheel(E.wheel);
+            }
+            else if (E.type == SDL_WINDOWEVENT)
+            {
+                switch (E.window.event)
+                {
+                    case SDL_WINDOWEVENT_RESIZED:
+                    {
+                        w = E.window.data1;
+                        h = E.window.data2;
+                        app.resize(E.window.data1, E.window.data2);
+                        break;
+                    }
+                }
+            }
+            needRender = true;
         }
 
-        glClearColor(0.08f, 0.18f, 0.18f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        if (needRender)
+        {
+            glViewport(0, 0, w, h);
+            glClearColor(0.08f, 0.18f, 0.18f, 1.0f);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
+            glMatrixMode(GL_MODELVIEW);
+            glLoadIdentity();
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
 
-        app.renderFullscreen();
+            app.renderFullscreen();
 
-        SDL_GL_SwapWindow(window);
+            SDL_GL_SwapWindow(window);
+        }
     }
 
     Platform_Finalise();

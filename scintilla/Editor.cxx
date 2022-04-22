@@ -3797,6 +3797,23 @@ static bool cmpSelPtrs(const SelectionRange *a, const SelectionRange *b) {
 	return *a < *b;
 }
 
+void Editor::StartSelectionxy(int x, int y)
+{
+    auto pos = PositionFromLocation(Point(x, y));
+    SetSelection(pos, pos);
+}
+
+void Editor::ChangeSelectionxy(int x, int y)
+{
+    auto pos = PositionFromLocation(Point(x, y));
+    SetSelection(pos);
+}
+
+void Editor::ScrollY(int amount)
+{
+    Command(SCI_LINESCROLL, 0, -amount);
+}
+
 // AddCharUTF inserts an array of bytes which may or may not be in UTF-8.
 void Editor::AddCharUTF(char *s, unsigned int len) {
 	FilterSelections();

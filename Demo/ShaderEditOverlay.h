@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <assert.h>
 #include <ctype.h>
+
+
+
 #include <time.h>
 
 
@@ -30,9 +33,17 @@
 #include "ContractionState.h"
 #include "CellBuffer.h"
 #include "KeyMap.h"
+
+
+
 #include "Indicator.h"
 #include "XPM.h"
 #include "LineMarker.h"
+
+
+
+
+
 #include "Style.h"
 #include "ViewStyle.h"
 #include "Decoration.h"
@@ -44,13 +55,15 @@
 #include "PositionCache.h"
 #include "Editor.h"
 
+
+
 #include "UniConversion.h"
 
 #include "SciLexer.h"
 #include "LexerModule.h"
 
-#include "Catalogue.h"
 
+#include "Catalogue.h"
 class LexState;
 
 class ShaderEditOverlay
@@ -60,10 +73,17 @@ public:
     ~ShaderEditOverlay();
 
     void initialise(int w, int h);
+    void resize(int w, int h);
     void reset();
 
-    void handleKeyDown(SDL_KeyboardEvent &event);
+    void handleKeyDown(const SDL_KeyboardEvent &event);
     void handleTextInput(SDL_TextInputEvent &event);
+    void handleMouseButtonInput(const SDL_MouseButtonEvent &event);
+    void handleMouseMotionInput(const SDL_MouseMotionEvent &event);
+    void handleMouseWheel(const SDL_MouseWheelEvent &event);
+
+    void loadFile();
+
     void renderFullscreen();
 
     bool requireReset()
