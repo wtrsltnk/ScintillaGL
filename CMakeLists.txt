@@ -4,8 +4,8 @@ include(cmake/CPM.cmake)
 
 CPMAddPackage(
     NAME SDL2
-    VERSION 2.0.14
-    URL https://www.libsdl.org/release/SDL2-2.0.14.zip
+    VERSION 2.0.22
+    URL https://www.libsdl.org/release/SDL2-2.0.22.zip
     OPTIONS
         "SDL_SHARED Off"
 )

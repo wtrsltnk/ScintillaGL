@@ -9,3 +9,4 @@
 *.sdf
 *.opensdf
 version.txt
+build/*
