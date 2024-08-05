@@ -1,9 +1,5 @@
 #pragma once
 
-
-
-#include <new>
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -105,7 +101,7 @@ private:
 
     LexState *mLexer = nullptr;
 
-    Editor mShaderEditor;
+    Editor mMainEditor;
     Editor *mActiveEditor = nullptr;
 
     float mWidth = 0.0f;

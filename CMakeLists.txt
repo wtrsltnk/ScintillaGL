@@ -12,5 +12,10 @@ CPMAddPackage(
 
 project(ScintillaGL VERSION "0.1.0")
 
+add_library(ScintillaGL INTERFACE
+    README.md
+    TODO.md
+)
+
 add_subdirectory(scintilla)
 add_subdirectory(Demo)

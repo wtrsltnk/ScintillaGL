@@ -124,7 +124,7 @@ int main()
         if (needRender)
         {
             glViewport(0, 0, w, h);
-            glClearColor(0.08f, 0.18f, 0.18f, 1.0f);
+            glClearColor(0.28f, 0.28f, 0.38f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             glMatrixMode(GL_MODELVIEW);
@@ -135,6 +135,8 @@ int main()
             app.renderFullscreen();
 
             SDL_GL_SwapWindow(window);
+
+            SDL_Delay(20);
         }
     }
 

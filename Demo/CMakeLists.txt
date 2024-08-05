@@ -1,10 +1,10 @@
 ﻿cmake_minimum_required(VERSION 3.12)
 
-project(ScintillaGL VERSION "0.1.0")
+project(Demo VERSION "0.1.0")
 
-add_executable(ScintillaGL)
+add_executable(Demo)
 
-target_sources(ScintillaGL
+target_sources(Demo
     PRIVATE
         "Demo.cxx"
         "../external/glad.c"
@@ -16,13 +16,13 @@ target_sources(ScintillaGL
         "stb_truetype.h"
 )
 
-target_compile_features(ScintillaGL
+target_compile_features(Demo
     PRIVATE
         cxx_nullptr
         cxx_std_17
 )
 
-target_include_directories(ScintillaGL
+target_include_directories(Demo
     PRIVATE
         "include"
         "../external/include"
@@ -31,7 +31,7 @@ target_include_directories(ScintillaGL
         "../scintilla/lexlib"
 )
 
-target_link_libraries(ScintillaGL
+target_link_libraries(Demo
     PRIVATE
         SDL2-static
         scintilla
