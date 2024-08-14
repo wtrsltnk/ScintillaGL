@@ -4,7 +4,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
-#include <ctype.h>
 
 
 
@@ -60,7 +59,31 @@
 
 
 #include "Catalogue.h"
+
+#include <iostream>
+
 class LexState;
+
+class EditorEx : public Editor
+{
+public:
+    void DebugPrint()
+    {
+        std::cout << posTopLine << std::endl;
+        std::cout << pdoc->LinesTotal() << std::endl;
+        std::cout << LinesOnScreen() << std::endl;
+    }
+
+    void GetScrollBar(
+        float &start,
+        float &length)
+    {
+        auto lineHeight = Command(SCI_TEXTHEIGHT);
+
+        start = (posTopLine / lineHeight) / static_cast<float>(pdoc->LinesTotal() + LinesOnScreen());
+        length = LinesOnScreen() / static_cast<float>(pdoc->LinesTotal() + LinesOnScreen());
+    }
+};
 
 class ShaderEditOverlay
 {
@@ -73,6 +96,7 @@ public:
     void reset();
 
     void handleKeyDown(const SDL_KeyboardEvent &event);
+    void handleKeyUp(const SDL_KeyboardEvent &event);
     void handleTextInput(SDL_TextInputEvent &event);
     void handleMouseButtonInput(const SDL_MouseButtonEvent &event);
     void handleMouseMotionInput(const SDL_MouseMotionEvent &event);
@@ -101,9 +125,11 @@ private:
 
     LexState *mLexer = nullptr;
 
-    Editor mMainEditor;
-    Editor *mActiveEditor = nullptr;
+    EditorEx mMainEditor;
+    EditorEx *mActiveEditor = nullptr;
 
     float mWidth = 0.0f;
     float mHeight = 0.0f;
+    bool ctrl = false;
+    int mFontSize = 20;
 };

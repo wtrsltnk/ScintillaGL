@@ -118,6 +118,9 @@ void SetAStyle(Editor &ed, int style, Colour fore, Colour back = 0xFFFFFFFF, int
         ed.Command(SCI_STYLESETFONT, style, reinterpret_cast<sptr_t>(face));
 }
 
+const char sqlKeyword[] = {
+    "select from where "};
+
 const char cppKeyword[] = {
     "break case const continue default do else enum extern for "
     "goto if inline register restrict return sizeof static struct "
@@ -210,35 +213,34 @@ const int markersArray[][NB_FOLDER_STATE] = {
     {SC_MARK_CIRCLEMINUS, SC_MARK_CIRCLEPLUS, SC_MARK_VLINE, SC_MARK_LCORNERCURVE, SC_MARK_CIRCLEPLUSCONNECTED, SC_MARK_CIRCLEMINUSCONNECTED, SC_MARK_TCORNERCURVE},
     {SC_MARK_BOXMINUS, SC_MARK_BOXPLUS, SC_MARK_VLINE, SC_MARK_LCORNER, SC_MARK_BOXPLUSCONNECTED, SC_MARK_BOXMINUSCONNECTED, SC_MARK_TCORNER}};
 
-const char *fontName = "c:/windows/fonts/UbuntuMono-Regular.ttf";
+const char *fontName = "C:\\Windows\\Fonts\\RedHatMono-Light.ttf";
 
 void ShaderEditOverlay::initialiseShaderEditor()
 {
-
-    mMainEditor.Command(SCI_SETSTYLEBITS, 7);
-
     mLexer->SetLexer(SCLEX_CPP);
     mLexer->SetWordList(0, cppKeyword);
     mLexer->PropSet("fold", "0");
 
+    mMainEditor.Command(SCI_SETSTYLEBITS, 7);
+
     // Set up the global default style. These attributes are used wherever no explicit choices are made.
-    SetAStyle(mMainEditor, STYLE_DEFAULT, 0xFFFFFFFF, 0xD0333333, 20, fontName);
+    SetAStyle(mMainEditor, STYLE_DEFAULT, 0xFFFFFFFF, 0xD0333333, mFontSize, fontName);
     mMainEditor.Command(SCI_STYLECLEARALL); // Copies global style to all others
-    SetAStyle(mMainEditor, STYLE_INDENTGUIDE, 0xFFC0C0C0, 0xD0333333, 20, fontName);
-    SetAStyle(mMainEditor, STYLE_BRACELIGHT, 0xFF00FF00, 0xD0333333, 20, fontName);
-    SetAStyle(mMainEditor, STYLE_BRACEBAD, 0xFF0000FF, 0xD0333333, 20, fontName);
-    SetAStyle(mMainEditor, STYLE_LINENUMBER, 0xFFC0C0C0, 0xD0333333, 20, fontName);
-    mMainEditor.Command(SCI_SETFOLDMARGINCOLOUR, 1, 0xD01A1A1A);
-    mMainEditor.Command(SCI_SETFOLDMARGINHICOLOUR, 1, 0xD01A1A1A);
+    SetAStyle(mMainEditor, STYLE_INDENTGUIDE, 0xFFC0C0C0, 0xD0333333, mFontSize, fontName);
+    SetAStyle(mMainEditor, STYLE_BRACELIGHT, 0xFF00FF00, 0xD0333333, mFontSize, fontName);
+    SetAStyle(mMainEditor, STYLE_BRACEBAD, 0xFF0000FF, 0xD0333333, mFontSize, fontName);
+    SetAStyle(mMainEditor, STYLE_LINENUMBER, 0xFFC0C0C0, 0xD0333333, mFontSize, fontName);
+    mMainEditor.Command(SCI_SETFOLDMARGINCOLOUR, 1, 0xD0333333);
+    mMainEditor.Command(SCI_SETFOLDMARGINHICOLOUR, 1, 0xD0333333);
     mMainEditor.Command(SCI_SETSELBACK, 1, 0xD0CC9966);
     mMainEditor.Command(SCI_SETCARETFORE, 0xFFFFFFFF, 0);
     mMainEditor.Command(SCI_SETCARETLINEVISIBLE, 1);
     mMainEditor.Command(SCI_SETCARETLINEBACK, 0xFFFFFFFF);
     mMainEditor.Command(SCI_SETCARETLINEBACKALPHA, 0x20);
 
-    mMainEditor.Command(SCI_SETMARGINWIDTHN, 0, 56);             //Calculate correct width
-    mMainEditor.Command(SCI_SETMARGINWIDTHN, 1, 20);             //Calculate correct width
-    mMainEditor.Command(SCI_SETMARGINMASKN, 1, SC_MASK_FOLDERS); //Calculate correct width
+    mMainEditor.Command(SCI_SETMARGINWIDTHN, 0, mFontSize * 2);  // Calculate correct width
+    mMainEditor.Command(SCI_SETMARGINWIDTHN, 1, 20);             // Calculate correct width
+    mMainEditor.Command(SCI_SETMARGINMASKN, 1, SC_MASK_FOLDERS); // Calculate correct width
 
     for (size_t i = 0; i < NB_FOLDER_STATE; i++)
     {
@@ -251,10 +253,30 @@ void ShaderEditOverlay::initialiseShaderEditor()
     mMainEditor.Command(SCI_SETTABWIDTH, 4);
     mMainEditor.Command(SCI_SETINDENTATIONGUIDES, SC_IV_REAL);
 
-    SetAStyle(mMainEditor, SCE_C_DEFAULT, 0xFFFFFFFF, 0xD0333333, 20, fontName);
+    if (false)
+    {
+        mLexer->SetLexer(SCLEX_SQL);
+        mLexer->SetWordList(0, sqlKeyword);
+        mLexer->PropSet("fold", "0");
+
+        SetAStyle(mMainEditor, SCE_SQL_DEFAULT, 0xFFFFFFFF, 0xD0333333, mFontSize, fontName);
+        // SetAStyle(mMainEditor, SCE_SQL_CHARACTER, 0xFF0066FF, 0xD0333333);
+        // SetAStyle(mMainEditor, SCE_SQL_WORD2, 0xFFFFFF00, 0xD0333333);
+        SetAStyle(mMainEditor, SCE_SQL_STRING, 0xFF00FF00, 0xD0333333);
+        // SetAStyle(mMainEditor, SCE_SQL_NUMBER, 0xFF0080FF, 0xD0333333);
+        // SetAStyle(mMainEditor, SCE_SQL_OPERATOR, 0xFF00CCFF, 0xD0333333);
+        SetAStyle(mMainEditor, SCE_SQL_COMMENT, 0xFF008000, 0xD0333333);
+        SetAStyle(mMainEditor, SCE_SQL_COMMENTDOC, 0xFF008000, 0xD0333333);
+        SetAStyle(mMainEditor, SCE_SQL_COMMENTDOCKEYWORD, 0xFF008000, 0xD0333333);
+        SetAStyle(mMainEditor, SCE_SQL_COMMENTDOCKEYWORDERROR, 0xFF008000, 0xD0333333);
+        SetAStyle(mMainEditor, SCE_SQL_COMMENTLINE, 0xFF008000, 0xD0333333);
+        SetAStyle(mMainEditor, SCE_SQL_COMMENTLINEDOC, 0xFF008000, 0xD0333333);
+    }
+
+    SetAStyle(mMainEditor, SCE_C_DEFAULT, 0xFFFFFFFF, 0xD0333333, mFontSize, fontName);
     SetAStyle(mMainEditor, SCE_C_WORD, 0xFF0066FF, 0xD0333333);
     SetAStyle(mMainEditor, SCE_C_WORD2, 0xFFFFFF00, 0xD0333333);
-    //WTF??? SetAStyle(SCE_C_GLOBALCLASS, 0xFF0000FF, 0xFF000000);
+    // WTF??? SetAStyle(SCE_C_GLOBALCLASS, 0xFF0000FF, 0xFF000000);
     SetAStyle(mMainEditor, SCE_C_PREPROCESSOR, 0xFFC0C0C0, 0xD0333333);
     SetAStyle(mMainEditor, SCE_C_NUMBER, 0xFF0080FF, 0xD0333333);
     SetAStyle(mMainEditor, SCE_C_OPERATOR, 0xFF00CCFF, 0xD0333333);
@@ -278,8 +300,8 @@ void ShaderEditOverlay::initialise(int w, int h)
     mActiveEditor = &mMainEditor;
     mActiveEditor->Command(SCI_SETFOCUS, true);
 
-//    const char *str = "#include <iostream>\n\nint main(int argc, char *argv[])\n{\n}\n";
-//    mMainEditor.Command(SCI_ADDTEXT, strlen(str), reinterpret_cast<LPARAM>(str));
+    //    const char *str = "#include <iostream>\n\nint main(int argc, char *argv[])\n{\n}\n";
+    //    mMainEditor.Command(SCI_ADDTEXT, strlen(str), reinterpret_cast<LPARAM>(str));
     loadFile();
 }
 
@@ -288,9 +310,7 @@ void ShaderEditOverlay::resize(int w, int h)
     mWidth = w;
     mHeight = h;
 
-    float w1 = mWidth, h1 = mHeight;
-
-    mMainEditor.SetSize(w1, h1);
+    mMainEditor.DebugPrint();
 }
 
 void ShaderEditOverlay::reset()
@@ -299,6 +319,7 @@ void ShaderEditOverlay::reset()
     mMainEditor.Command(SCI_CLEARALL);
     mMainEditor.Command(SCI_EMPTYUNDOBUFFER);
     mMainEditor.Command(SCI_SETFOCUS, true);
+    mMainEditor.Command(SCI_SETHSCROLLBAR, true);
 }
 
 void BraceMatch(Editor &ed)
@@ -341,7 +362,7 @@ void BraceMatch(Editor &ed)
     {
         ed.Command(SCI_BRACEHIGHLIGHT, braceAtCaret, braceOpposite);
 
-        //if (_pEditView->isShownIndentGuide())
+        // if (_pEditView->isShownIndentGuide())
         {
             int columnAtCaret = int(ed.Command(SCI_GETCOLUMN, braceAtCaret));
             int columnOpposite = int(ed.Command(SCI_GETCOLUMN, braceOpposite));
@@ -352,7 +373,7 @@ void BraceMatch(Editor &ed)
 
 void ShaderEditOverlay::renderFullscreen()
 {
-    //update logic
+    // update logic
     if (timeGetTime() > mNextTick)
     {
         mMainEditor.Tick();
@@ -360,6 +381,10 @@ void ShaderEditOverlay::renderFullscreen()
     }
 
     BraceMatch(mMainEditor);
+
+    float w1 = mWidth - 20, h1 = mHeight;
+
+    mMainEditor.SetSize(w1, h1);
 
     glUseProgram(0);
     glMatrixMode(GL_PROJECTION);
@@ -383,6 +408,17 @@ void ShaderEditOverlay::renderFullscreen()
     glEnable(GL_CLIP_PLANE3);
 
     glTranslatef(0.0f, 0, 0);
+
+    float start, length;
+    mActiveEditor->GetScrollBar(start, length);
+
+    glBegin(GL_QUADS);
+    glVertex2f(mWidth - 20, mHeight * start);
+    glVertex2f(mWidth, mHeight * start);
+    glVertex2f(mWidth, mHeight * (start + length));
+    glVertex2f(mWidth-20, mHeight * (start + length));
+    glEnd();
+
     mMainEditor.Paint();
 
     glPopAttrib();
@@ -390,9 +426,24 @@ void ShaderEditOverlay::renderFullscreen()
 
 void ShaderEditOverlay::loadFile()
 {
-    std::ifstream t("C:/Code/small-apps/ScintillaGL/scintilla/Editor.cxx");
     std::stringstream buffer;
+
+    std::ifstream t("C:/Code/small-apps/ScintillaGL/Demo/Demo.cxx");
     buffer << t.rdbuf();
+//     buffer << R"CODE(SQLITE Data Source=c:\mydb.db;Version=3;
+
+// USE AdventureWorks2022;
+// GO
+
+//     SELECT Name,
+//         ProductNumber,
+//         ListPrice AS Price
+//             FROM Production.Product
+//                 ORDER BY Name ASC;
+// GO
+
+// )CODE";
+
     auto str = buffer.str();
 
     mMainEditor.Command(SCI_CANCEL);
@@ -468,8 +519,8 @@ void ShaderEditOverlay::handleKeyDown(
         case SDLK_KP_DIVIDE:
             sciKey = SCK_DIVIDE;
             break;
-        //case SDLK_LSUPER:			sciKey = SCK_WIN;	        break;
-        //case SDLK_RSUPER:			sciKey = SCK_RWIN;	        break;
+        // case SDLK_LSUPER:			sciKey = SCK_WIN;	        break;
+        // case SDLK_RSUPER:			sciKey = SCK_RWIN;	        break;
         case SDLK_MENU:
             sciKey = SCK_MENU;
             break;
@@ -488,6 +539,14 @@ void ShaderEditOverlay::handleKeyDown(
         case SDLK_RIGHTBRACKET:
             sciKey = ']';
             break;
+        case SDLK_0:
+            sciKey = '0';
+            if (ctrl)
+            {
+                mFontSize = 20;
+                initialiseShaderEditor();
+            }
+            break;
         case SDLK_LSHIFT:
         case SDLK_RSHIFT:
         case SDLK_LALT:
@@ -495,6 +554,8 @@ void ShaderEditOverlay::handleKeyDown(
         case SDLK_LCTRL:
         case SDLK_RCTRL:
             sciKey = 0;
+
+            ctrl = event.keysym.mod & KMOD_LCTRL || event.keysym.mod & KMOD_RCTRL;
             break;
         default:
             sciKey = event.keysym.sym;
@@ -512,6 +573,18 @@ void ShaderEditOverlay::handleKeyDown(
             ctrlPressed,
             altPressed,
             &consumed);
+    }
+}
+
+void ShaderEditOverlay::handleKeyUp(
+    const SDL_KeyboardEvent &event)
+{
+    switch (event.keysym.sym)
+    {
+        case SDLK_LCTRL:
+        case SDLK_RCTRL:
+            ctrl = event.keysym.mod & KMOD_LCTRL || event.keysym.mod & KMOD_RCTRL;
+            break;
     }
 }
 
@@ -542,5 +615,24 @@ void ShaderEditOverlay::handleMouseMotionInput(
 void ShaderEditOverlay::handleMouseWheel(
     const SDL_MouseWheelEvent &event)
 {
-    mActiveEditor->ScrollY(event.y*4);
+    if (ctrl)
+    {
+        mFontSize += (event.y * 4);
+
+        if (mFontSize < 8)
+        {
+            mFontSize = 8;
+        }
+
+        if (mFontSize > 72)
+        {
+            mFontSize = 72;
+        }
+
+        initialiseShaderEditor();
+    }
+    else
+    {
+        mActiveEditor->ScrollY(event.y * 4);
+    }
 }

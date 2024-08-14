@@ -101,6 +101,10 @@ int main()
 
                 app.handleKeyDown(E.key);
             }
+            else if (E.type == SDL_KEYUP)
+            {
+                app.handleKeyUp(E.key);
+            }
             else if (E.type == SDL_MOUSEWHEEL)
             {
                 app.handleMouseWheel(E.wheel);
