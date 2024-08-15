@@ -213,7 +213,7 @@ const int markersArray[][NB_FOLDER_STATE] = {
     {SC_MARK_CIRCLEMINUS, SC_MARK_CIRCLEPLUS, SC_MARK_VLINE, SC_MARK_LCORNERCURVE, SC_MARK_CIRCLEPLUSCONNECTED, SC_MARK_CIRCLEMINUSCONNECTED, SC_MARK_TCORNERCURVE},
     {SC_MARK_BOXMINUS, SC_MARK_BOXPLUS, SC_MARK_VLINE, SC_MARK_LCORNER, SC_MARK_BOXPLUSCONNECTED, SC_MARK_BOXMINUSCONNECTED, SC_MARK_TCORNER}};
 
-const char *fontName = "C:\\Windows\\Fonts\\RedHatMono-Light.ttf";
+const char *fontName = "C:\\Windows\\Fonts\\consola.ttf";
 
 void ShaderEditOverlay::initialiseShaderEditor()
 {
@@ -416,7 +416,7 @@ void ShaderEditOverlay::renderFullscreen()
     glVertex2f(mWidth - 20, mHeight * start);
     glVertex2f(mWidth, mHeight * start);
     glVertex2f(mWidth, mHeight * (start + length));
-    glVertex2f(mWidth-20, mHeight * (start + length));
+    glVertex2f(mWidth - 20, mHeight * (start + length));
     glEnd();
 
     mMainEditor.Paint();
@@ -428,21 +428,21 @@ void ShaderEditOverlay::loadFile()
 {
     std::stringstream buffer;
 
-    std::ifstream t("C:/Code/small-apps/ScintillaGL/Demo/Demo.cxx");
+    std::ifstream t("C:/Code/small-apps/ScintillaGL/Demo/ShaderEditOverlay.cxx");
     buffer << t.rdbuf();
-//     buffer << R"CODE(SQLITE Data Source=c:\mydb.db;Version=3;
+    //     buffer << R"CODE(SQLITE Data Source=c:\mydb.db;Version=3;
 
-// USE AdventureWorks2022;
-// GO
+    // USE AdventureWorks2022;
+    // GO
 
-//     SELECT Name,
-//         ProductNumber,
-//         ListPrice AS Price
-//             FROM Production.Product
-//                 ORDER BY Name ASC;
-// GO
+    //     SELECT Name,
+    //         ProductNumber,
+    //         ListPrice AS Price
+    //             FROM Production.Product
+    //                 ORDER BY Name ASC;
+    // GO
 
-// )CODE";
+    // )CODE";
 
     auto str = buffer.str();
 
@@ -594,18 +594,43 @@ void ShaderEditOverlay::handleTextInput(
     mActiveEditor->AddCharUTF(event.text, strlen(event.text));
 }
 
+static bool _scrolling = false;
+
 void ShaderEditOverlay::handleMouseButtonInput(
     const SDL_MouseButtonEvent &event)
 {
-    if (event.state == SDL_PRESSED)
+    if (event.state == SDL_RELEASED)
     {
-        mActiveEditor->StartSelectionxy(event.x, event.y);
+        _scrolling = false;
+    }
+
+    if (event.x > (mWidth - 20))
+    {
+        if (event.state == SDL_PRESSED)
+        {
+            _scrolling = true;
+            mActiveEditor->StartScroll(event.y);
+        }
+    }
+    else
+    {
+        if (event.state == SDL_PRESSED)
+        {
+            mActiveEditor->StartSelectionxy(event.x, event.y);
+        }
     }
 }
 
 void ShaderEditOverlay::handleMouseMotionInput(
     const SDL_MouseMotionEvent &event)
 {
+    if (_scrolling)
+    {
+        mActiveEditor->Scroll(event.y, mHeight);
+
+        return;
+    }
+
     if (event.state == SDL_PRESSED)
     {
         mActiveEditor->ChangeSelectionxy(event.x, event.y);

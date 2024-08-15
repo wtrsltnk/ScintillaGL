@@ -80,8 +80,31 @@ public:
     {
         auto lineHeight = Command(SCI_TEXTHEIGHT);
 
-        start = (posTopLine / lineHeight) / static_cast<float>(pdoc->LinesTotal() + LinesOnScreen());
-        length = LinesOnScreen() / static_cast<float>(pdoc->LinesTotal() + LinesOnScreen());
+        start = topLine / static_cast<float>(pdoc->LinesTotal());
+        length = LinesOnScreen() / static_cast<float>(pdoc->LinesTotal());
+    }
+
+    int startValue = 0;
+    void StartScroll(int value)
+    {
+        startValue = value;
+    }
+
+    void Scroll(int value, int height)
+    {
+        auto lineHeight = Command(SCI_TEXTHEIGHT);
+
+        auto a = (pdoc->LinesTotal() / (float)height);
+
+        auto amount = (int)(startValue - value) * a;
+
+        if (amount == 0)
+        {
+            return;
+        }
+
+        ScrollY(amount);
+        startValue = value;
     }
 };
 

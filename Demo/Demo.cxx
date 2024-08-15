@@ -83,7 +83,7 @@ int main()
             {
                 run = false;
             }
-            else if (E.type == SDL_MOUSEBUTTONDOWN)
+            else if (E.type == SDL_MOUSEBUTTONDOWN || E.type == SDL_MOUSEBUTTONUP)
             {
                 app.handleMouseButtonInput(E.button);
             }
