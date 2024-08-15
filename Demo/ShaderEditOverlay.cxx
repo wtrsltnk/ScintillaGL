@@ -118,9 +118,6 @@ void SetAStyle(Editor &ed, int style, Colour fore, Colour back = 0xFFFFFFFF, int
         ed.Command(SCI_STYLESETFONT, style, reinterpret_cast<sptr_t>(face));
 }
 
-const char sqlKeyword[] = {
-    "select from where "};
-
 const char cppKeyword[] = {
     "break case const continue default do else enum extern for "
     "goto if inline register restrict return sizeof static struct "
@@ -158,6 +155,9 @@ const char cppKeyword[] = {
     "signgam "
     "CONST ENUM "
 
+};
+
+const char cppKeyword2[] = {
     "__auto_type auto char double float int long short signed unsigned void "
     "bool char8_t char16_t char32_t wchar_t nullptr_t nothrow_t "
     "_Bool complex _Complex _Imaginary imaginary "
@@ -211,7 +211,8 @@ const int markersArray[][NB_FOLDER_STATE] = {
     {SC_MARK_MINUS, SC_MARK_PLUS, SC_MARK_EMPTY, SC_MARK_EMPTY, SC_MARK_EMPTY, SC_MARK_EMPTY, SC_MARK_EMPTY},
     {SC_MARK_ARROWDOWN, SC_MARK_ARROW, SC_MARK_EMPTY, SC_MARK_EMPTY, SC_MARK_EMPTY, SC_MARK_EMPTY, SC_MARK_EMPTY},
     {SC_MARK_CIRCLEMINUS, SC_MARK_CIRCLEPLUS, SC_MARK_VLINE, SC_MARK_LCORNERCURVE, SC_MARK_CIRCLEPLUSCONNECTED, SC_MARK_CIRCLEMINUSCONNECTED, SC_MARK_TCORNERCURVE},
-    {SC_MARK_BOXMINUS, SC_MARK_BOXPLUS, SC_MARK_VLINE, SC_MARK_LCORNER, SC_MARK_BOXPLUSCONNECTED, SC_MARK_BOXMINUSCONNECTED, SC_MARK_TCORNER}};
+    {SC_MARK_BOXMINUS, SC_MARK_BOXPLUS, SC_MARK_VLINE, SC_MARK_LCORNER, SC_MARK_BOXPLUSCONNECTED, SC_MARK_BOXMINUSCONNECTED, SC_MARK_TCORNER},
+};
 
 const char *fontName = "C:\\Windows\\Fonts\\consola.ttf";
 
@@ -219,27 +220,29 @@ void ShaderEditOverlay::initialiseShaderEditor()
 {
     mLexer->SetLexer(SCLEX_CPP);
     mLexer->SetWordList(0, cppKeyword);
+    mLexer->SetWordList(1, cppKeyword2);
     mLexer->PropSet("fold", "0");
 
     mMainEditor.Command(SCI_SETSTYLEBITS, 7);
 
     // Set up the global default style. These attributes are used wherever no explicit choices are made.
-    SetAStyle(mMainEditor, STYLE_DEFAULT, 0xFFFFFFFF, 0xD0333333, mFontSize, fontName);
+    SetAStyle(mMainEditor, STYLE_DEFAULT, 0xFFFFFFFF, 0xFF333333, _fontSize, fontName);
     mMainEditor.Command(SCI_STYLECLEARALL); // Copies global style to all others
-    SetAStyle(mMainEditor, STYLE_INDENTGUIDE, 0xFFC0C0C0, 0xD0333333, mFontSize, fontName);
-    SetAStyle(mMainEditor, STYLE_BRACELIGHT, 0xFF00FF00, 0xD0333333, mFontSize, fontName);
-    SetAStyle(mMainEditor, STYLE_BRACEBAD, 0xFF0000FF, 0xD0333333, mFontSize, fontName);
-    SetAStyle(mMainEditor, STYLE_LINENUMBER, 0xFFC0C0C0, 0xD0333333, mFontSize, fontName);
-    mMainEditor.Command(SCI_SETFOLDMARGINCOLOUR, 1, 0xD0333333);
-    mMainEditor.Command(SCI_SETFOLDMARGINHICOLOUR, 1, 0xD0333333);
+    SetAStyle(mMainEditor, STYLE_INDENTGUIDE, 0xFFC0C0C0, 0xFF333333, _fontSize, fontName);
+    SetAStyle(mMainEditor, STYLE_BRACELIGHT, MakeRGBA(69, 198, 214), 0xFF333333, _fontSize, fontName);
+    SetAStyle(mMainEditor, STYLE_BRACEBAD, MakeRGBA(69, 198, 214), 0xFF333333, _fontSize, fontName);
+    SetAStyle(mMainEditor, STYLE_LINENUMBER, 0xFFC0C0C0, MakeRGBA(64, 66, 68), _fontSize, fontName);
+
+    mMainEditor.Command(SCI_SETFOLDMARGINCOLOUR, 1, 0xFF333333);
+    mMainEditor.Command(SCI_SETFOLDMARGINHICOLOUR, 1, MakeRGBA(64, 66, 68));
     mMainEditor.Command(SCI_SETSELBACK, 1, 0xD0CC9966);
     mMainEditor.Command(SCI_SETCARETFORE, 0xFFFFFFFF, 0);
     mMainEditor.Command(SCI_SETCARETLINEVISIBLE, 1);
     mMainEditor.Command(SCI_SETCARETLINEBACK, 0xFFFFFFFF);
     mMainEditor.Command(SCI_SETCARETLINEBACKALPHA, 0x20);
 
-    mMainEditor.Command(SCI_SETMARGINWIDTHN, 0, mFontSize * 2);  // Calculate correct width
-    mMainEditor.Command(SCI_SETMARGINWIDTHN, 1, 20);             // Calculate correct width
+    mMainEditor.Command(SCI_SETMARGINWIDTHN, 0, _fontSize * 4);  // Calculate correct width
+    mMainEditor.Command(SCI_SETMARGINWIDTHN, 1, 40);             // Calculate correct width
     mMainEditor.Command(SCI_SETMARGINMASKN, 1, SC_MASK_FOLDERS); // Calculate correct width
 
     for (size_t i = 0; i < NB_FOLDER_STATE; i++)
@@ -253,35 +256,21 @@ void ShaderEditOverlay::initialiseShaderEditor()
     mMainEditor.Command(SCI_SETTABWIDTH, 4);
     mMainEditor.Command(SCI_SETINDENTATIONGUIDES, SC_IV_REAL);
 
-    if (false)
-    {
-        mLexer->SetLexer(SCLEX_SQL);
-        mLexer->SetWordList(0, sqlKeyword);
-        mLexer->PropSet("fold", "0");
-
-        SetAStyle(mMainEditor, SCE_SQL_DEFAULT, 0xFFFFFFFF, 0xD0333333, mFontSize, fontName);
-        // SetAStyle(mMainEditor, SCE_SQL_CHARACTER, 0xFF0066FF, 0xD0333333);
-        // SetAStyle(mMainEditor, SCE_SQL_WORD2, 0xFFFFFF00, 0xD0333333);
-        SetAStyle(mMainEditor, SCE_SQL_STRING, 0xFF00FF00, 0xD0333333);
-        // SetAStyle(mMainEditor, SCE_SQL_NUMBER, 0xFF0080FF, 0xD0333333);
-        // SetAStyle(mMainEditor, SCE_SQL_OPERATOR, 0xFF00CCFF, 0xD0333333);
-        SetAStyle(mMainEditor, SCE_SQL_COMMENT, 0xFF008000, 0xD0333333);
-        SetAStyle(mMainEditor, SCE_SQL_COMMENTDOC, 0xFF008000, 0xD0333333);
-        SetAStyle(mMainEditor, SCE_SQL_COMMENTDOCKEYWORD, 0xFF008000, 0xD0333333);
-        SetAStyle(mMainEditor, SCE_SQL_COMMENTDOCKEYWORDERROR, 0xFF008000, 0xD0333333);
-        SetAStyle(mMainEditor, SCE_SQL_COMMENTLINE, 0xFF008000, 0xD0333333);
-        SetAStyle(mMainEditor, SCE_SQL_COMMENTLINEDOC, 0xFF008000, 0xD0333333);
-    }
-
-    SetAStyle(mMainEditor, SCE_C_DEFAULT, 0xFFFFFFFF, 0xD0333333, mFontSize, fontName);
-    SetAStyle(mMainEditor, SCE_C_WORD, 0xFF0066FF, 0xD0333333);
-    SetAStyle(mMainEditor, SCE_C_WORD2, 0xFFFFFF00, 0xD0333333);
-    // WTF??? SetAStyle(SCE_C_GLOBALCLASS, 0xFF0000FF, 0xFF000000);
-    SetAStyle(mMainEditor, SCE_C_PREPROCESSOR, 0xFFC0C0C0, 0xD0333333);
-    SetAStyle(mMainEditor, SCE_C_NUMBER, 0xFF0080FF, 0xD0333333);
-    SetAStyle(mMainEditor, SCE_C_OPERATOR, 0xFF00CCFF, 0xD0333333);
-    SetAStyle(mMainEditor, SCE_C_COMMENT, 0xFF008000, 0xD0333333);
-    SetAStyle(mMainEditor, SCE_C_COMMENTLINE, 0xFF008000, 0xD0333333);
+    SetAStyle(mMainEditor, SCE_C_DEFAULT, MakeRGBA(214, 207, 154), 0xFF333333, _fontSize, fontName);
+    SetAStyle(mMainEditor, SCE_C_IDENTIFIER, MakeRGBA(214, 207, 154), 0xFF333333);
+    SetAStyle(mMainEditor, SCE_C_VERBATIM, MakeRGBA(140, 216, 254), 0xFF333333);
+    SetAStyle(mMainEditor, SCE_C_STRING, MakeRGBA(214, 149, 69), 0xFF333333);
+    SetAStyle(mMainEditor, SCE_C_WORD, MakeRGBA(69, 198, 214), 0xFF333333);
+    SetAStyle(mMainEditor, SCE_C_WORD2, MakeRGBA(255, 167, 214), 0xFF333333);
+    SetAStyle(mMainEditor, SCE_C_GLOBALCLASS, MakeRGBA(154, 167, 214), 0xFF000000); // in keywords 4 list
+    SetAStyle(mMainEditor, SCE_C_PREPROCESSOR, MakeRGBA(255, 106, 173), 0xFF333333);
+    SetAStyle(mMainEditor, SCE_C_NUMBER, MakeRGBA(138, 96, 44), 0xFF333333);
+    SetAStyle(mMainEditor, SCE_C_OPERATOR, MakeRGBA(214, 187, 154), 0xFF333333);
+    SetAStyle(mMainEditor, SCE_C_COMMENT, MakeRGBA(168, 171, 176), 0xFF333333);
+    SetAStyle(mMainEditor, SCE_C_COMMENTLINE, MakeRGBA(168, 171, 176), 0xFF333333);
+    SetAStyle(mMainEditor, SCE_C_COMMENTLINEDOC, MakeRGBA(168, 171, 176), 0xFF333333);
+    SetAStyle(mMainEditor, SCE_C_COMMENTDOC, MakeRGBA(168, 171, 176), 0xFF333333);
+    SetAStyle(mMainEditor, SCE_C_COMMENTDOCKEYWORDERROR, MakeRGBA(168, 171, 176), 0xFF333333);
 }
 
 void ShaderEditOverlay::initialise(int w, int h)
@@ -371,6 +360,8 @@ void BraceMatch(Editor &ed)
     }
 }
 
+const int scrollBarWidth = 15;
+
 void ShaderEditOverlay::renderFullscreen()
 {
     // update logic
@@ -382,7 +373,7 @@ void ShaderEditOverlay::renderFullscreen()
 
     BraceMatch(mMainEditor);
 
-    float w1 = mWidth - 20, h1 = mHeight;
+    float w1 = mWidth, h1 = mHeight;
 
     mMainEditor.SetSize(w1, h1);
 
@@ -409,19 +400,24 @@ void ShaderEditOverlay::renderFullscreen()
 
     glTranslatef(0.0f, 0, 0);
 
-    float start, length;
-    mActiveEditor->GetScrollBar(start, length);
-
-    glBegin(GL_QUADS);
-    glVertex2f(mWidth - 20, mHeight * start);
-    glVertex2f(mWidth, mHeight * start);
-    glVertex2f(mWidth, mHeight * (start + length));
-    glVertex2f(mWidth - 20, mHeight * (start + length));
-    glEnd();
-
     mMainEditor.Paint();
 
     glPopAttrib();
+
+    if (_hoverScroll || _scrolling)
+    {
+        float start, length;
+        mActiveEditor->GetScrollBar(start, length);
+
+        glBegin(GL_QUADS);
+        glColor4f(51.0f, 51.0f, 51.0f, _hoverScroll ? 255.0f : 155.0f);
+
+        glVertex2f(mWidth - scrollBarWidth, mHeight * start);
+        glVertex2f(mWidth, mHeight * start);
+        glVertex2f(mWidth, mHeight * (start + length));
+        glVertex2f(mWidth - scrollBarWidth, mHeight * (start + length));
+        glEnd();
+    }
 }
 
 void ShaderEditOverlay::loadFile()
@@ -508,6 +504,7 @@ void ShaderEditOverlay::handleKeyDown(
             sciKey = SCK_TAB;
             break;
         case SDLK_RETURN:
+        case SDLK_KP_ENTER:
             sciKey = SCK_RETURN;
             break;
         case SDLK_KP_PLUS:
@@ -541,9 +538,9 @@ void ShaderEditOverlay::handleKeyDown(
             break;
         case SDLK_0:
             sciKey = '0';
-            if (ctrl)
+            if (_ctrl)
             {
-                mFontSize = 20;
+                _fontSize = 20;
                 initialiseShaderEditor();
             }
             break;
@@ -555,7 +552,7 @@ void ShaderEditOverlay::handleKeyDown(
         case SDLK_RCTRL:
             sciKey = 0;
 
-            ctrl = event.keysym.mod & KMOD_LCTRL || event.keysym.mod & KMOD_RCTRL;
+            _ctrl = event.keysym.mod & KMOD_LCTRL || event.keysym.mod & KMOD_RCTRL;
             break;
         default:
             sciKey = event.keysym.sym;
@@ -583,7 +580,7 @@ void ShaderEditOverlay::handleKeyUp(
     {
         case SDLK_LCTRL:
         case SDLK_RCTRL:
-            ctrl = event.keysym.mod & KMOD_LCTRL || event.keysym.mod & KMOD_RCTRL;
+            _ctrl = event.keysym.mod & KMOD_LCTRL || event.keysym.mod & KMOD_RCTRL;
             break;
     }
 }
@@ -594,8 +591,6 @@ void ShaderEditOverlay::handleTextInput(
     mActiveEditor->AddCharUTF(event.text, strlen(event.text));
 }
 
-static bool _scrolling = false;
-
 void ShaderEditOverlay::handleMouseButtonInput(
     const SDL_MouseButtonEvent &event)
 {
@@ -604,7 +599,7 @@ void ShaderEditOverlay::handleMouseButtonInput(
         _scrolling = false;
     }
 
-    if (event.x > (mWidth - 20))
+    if (event.x > (mWidth - scrollBarWidth))
     {
         if (event.state == SDL_PRESSED)
         {
@@ -624,6 +619,8 @@ void ShaderEditOverlay::handleMouseButtonInput(
 void ShaderEditOverlay::handleMouseMotionInput(
     const SDL_MouseMotionEvent &event)
 {
+    _hoverScroll = event.x > (mWidth - scrollBarWidth - scrollBarWidth);
+
     if (_scrolling)
     {
         mActiveEditor->Scroll(event.y, mHeight);
@@ -640,18 +637,18 @@ void ShaderEditOverlay::handleMouseMotionInput(
 void ShaderEditOverlay::handleMouseWheel(
     const SDL_MouseWheelEvent &event)
 {
-    if (ctrl)
+    if (_ctrl)
     {
-        mFontSize += (event.y * 4);
+        _fontSize += (event.y * 4);
 
-        if (mFontSize < 8)
+        if (_fontSize < 8)
         {
-            mFontSize = 8;
+            _fontSize = 8;
         }
 
-        if (mFontSize > 72)
+        if (_fontSize > 72)
         {
-            mFontSize = 72;
+            _fontSize = 72;
         }
 
         initialiseShaderEditor();

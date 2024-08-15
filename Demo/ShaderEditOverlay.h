@@ -78,8 +78,6 @@ public:
         float &start,
         float &length)
     {
-        auto lineHeight = Command(SCI_TEXTHEIGHT);
-
         start = topLine / static_cast<float>(pdoc->LinesTotal());
         length = LinesOnScreen() / static_cast<float>(pdoc->LinesTotal());
     }
@@ -92,8 +90,6 @@ public:
 
     void Scroll(int value, int height)
     {
-        auto lineHeight = Command(SCI_TEXTHEIGHT);
-
         auto a = (pdoc->LinesTotal() / (float)height);
 
         auto amount = (int)(startValue - value) * a;
@@ -153,6 +149,8 @@ private:
 
     float mWidth = 0.0f;
     float mHeight = 0.0f;
-    bool ctrl = false;
-    int mFontSize = 20;
+    bool _ctrl = false;
+    bool _scrolling = false;
+    bool _hoverScroll = false;
+    int _fontSize = 20;
 };

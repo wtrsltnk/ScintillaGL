@@ -14,7 +14,12 @@ void Platform_Finalise();
 
 int w = 1024, h = 768;
 
-int main()
+int WINAPI WinMain(
+    HINSTANCE hInstance,
+    HINSTANCE hPrevInstance,
+    PSTR lpCmdLine,
+    int nCmdShow)
+
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) // Init The SDL Library, The VIDEO Subsystem
     {
@@ -128,7 +133,7 @@ int main()
         if (needRender)
         {
             glViewport(0, 0, w, h);
-            glClearColor(0.28f, 0.28f, 0.38f, 1.0f);
+            glClearColor(51.0f / 255.0f, 51.0f / 255.0f, 51.0f / 255.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
             glMatrixMode(GL_MODELVIEW);
