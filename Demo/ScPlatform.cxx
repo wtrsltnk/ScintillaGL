@@ -21,7 +21,7 @@
 
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "DefaultFontData.h"
-#include "stb_truetype.h"
+#include "stbtt_font.hpp"
 
 #ifdef SCI_NAMESPACE
 using namespace Scintilla;
@@ -327,7 +327,8 @@ int SurfaceImpl::LogPixelsY()
 float SurfaceImpl::DeviceHeightFont(float points)
 {
     int logPix = LogPixelsY();
-    return (points * logPix + logPix / 2) / 72.0f;
+    auto res =  (points * logPix + logPix / 2) / 72.0f;
+return res;
 }
 
 void SurfaceImpl::MoveTo(float x_, float y_)
@@ -485,13 +486,7 @@ void SurfaceImpl::Ellipse(PRectangle /*rc*/, Colour /*fore*/, Colour /*back*/)
 
 const int maxLengthTextRun = 10000;
 
-struct stbtt_Font
-{
-    stbtt_fontinfo fontinfo;
-    stbtt_bakedchar cdata[96]; // ASCII 32..126 is 95 glyphs
-    GLuint ftex;
-    float scale;
-};
+
 
 Font::Font() : fid(0)
 {
@@ -509,7 +504,7 @@ namespace platform
     {
         unsigned char *bmp = (unsigned char *)malloc(512 * 512);
 
-        stbtt_BakeFontBitmap(anonymousProRTTF, 0, 12.0 * 2, bmp, 512, 512, 32, 96, defaultFont.cdata); // no guarantee this fits!
+        stbtt_BakeFontBitmap(anonymousProBTTF, 0, 12.0 * 2, bmp, 512, 512, 32, 96, defaultFont.cdata); // no guarantee this fits!
 
         glGenTextures(1, &defaultFont.ftex);
         glBindTexture(GL_TEXTURE_2D, defaultFont.ftex);
@@ -532,9 +527,11 @@ void Font::Create(
     stbtt_Font *newFont = new stbtt_Font;
     size_t len;
 
-    FILE *f = fopen(fp.faceName, "rb");
+    FILE *f;
 
-    assert(f);
+    auto err = fopen_s(&f, fp.faceName, "rb");
+
+    assert(err == 0);
 
     fseek(f, 0, SEEK_END);
     len = ftell(f);

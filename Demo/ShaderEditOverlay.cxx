@@ -228,10 +228,10 @@ void ShaderEditOverlay::initialiseShaderEditor()
     // Set up the global default style. These attributes are used wherever no explicit choices are made.
     SetAStyle(mMainEditor, STYLE_DEFAULT, 0xFFFFFFFF, 0xFF333333, _fontSize, fontName);
     mMainEditor.Command(SCI_STYLECLEARALL); // Copies global style to all others
-    SetAStyle(mMainEditor, STYLE_INDENTGUIDE, 0xFFC0C0C0, 0xFF333333, _fontSize, fontName);
-    SetAStyle(mMainEditor, STYLE_BRACELIGHT, MakeRGBA(69, 198, 214), 0xFF333333, _fontSize, fontName);
-    SetAStyle(mMainEditor, STYLE_BRACEBAD, MakeRGBA(69, 198, 214), 0xFF333333, _fontSize, fontName);
-    SetAStyle(mMainEditor, STYLE_LINENUMBER, 0xFFC0C0C0, MakeRGBA(64, 66, 68), _fontSize, fontName);
+    SetAStyle(mMainEditor, STYLE_INDENTGUIDE, 0xFFC0C0C0, 0xFF333333);
+    SetAStyle(mMainEditor, STYLE_BRACELIGHT, MakeRGBA(69, 198, 214), 0xFF333333);
+    SetAStyle(mMainEditor, STYLE_BRACEBAD, MakeRGBA(69, 198, 214), 0xFF333333);
+    SetAStyle(mMainEditor, STYLE_LINENUMBER, 0xFFC0C0C0, MakeRGBA(64, 66, 68));
 
     mMainEditor.Command(SCI_SETFOLDMARGINCOLOUR, 1, 0xFF333333);
     mMainEditor.Command(SCI_SETFOLDMARGINHICOLOUR, 1, MakeRGBA(64, 66, 68));
@@ -256,7 +256,7 @@ void ShaderEditOverlay::initialiseShaderEditor()
     mMainEditor.Command(SCI_SETTABWIDTH, 4);
     mMainEditor.Command(SCI_SETINDENTATIONGUIDES, SC_IV_REAL);
 
-    SetAStyle(mMainEditor, SCE_C_DEFAULT, MakeRGBA(214, 207, 154), 0xFF333333, _fontSize, fontName);
+    SetAStyle(mMainEditor, SCE_C_DEFAULT, MakeRGBA(214, 207, 154), 0xFF333333);
     SetAStyle(mMainEditor, SCE_C_IDENTIFIER, MakeRGBA(214, 207, 154), 0xFF333333);
     SetAStyle(mMainEditor, SCE_C_VERBATIM, MakeRGBA(140, 216, 254), 0xFF333333);
     SetAStyle(mMainEditor, SCE_C_STRING, MakeRGBA(214, 149, 69), 0xFF333333);
@@ -273,18 +273,55 @@ void ShaderEditOverlay::initialiseShaderEditor()
     SetAStyle(mMainEditor, SCE_C_COMMENTDOCKEYWORDERROR, MakeRGBA(168, 171, 176), 0xFF333333);
 }
 
+static Font localFont;
+
+std::vector<LocalMenuItem> ShaderEditOverlay::wouterMenu = {
+    LocalMenuItem(
+        "File",
+        std::vector<LocalMenuItem>({
+            LocalMenuItem("New"),
+            LocalMenuItem("Open"),
+        })),
+    LocalMenuItem(
+        "Edit",
+        std::vector<LocalMenuItem>({
+            LocalMenuItem("Undo", false),
+            LocalMenuItem("Redo", false),
+            LocalMenuItem(
+                "Advanced",
+                std::vector<LocalMenuItem>({
+                    LocalMenuItem("Sort Lines"),
+                    LocalMenuItem("Fold"),
+                })),
+        })),
+    LocalMenuItem("View"),
+    LocalMenuItem("Build"),
+    LocalMenuItem("Debug"),
+    LocalMenuItem("Analyze"),
+    LocalMenuItem("Tools"),
+    LocalMenuItem("Window"),
+    LocalMenuItem("Help"),
+};
+
 void ShaderEditOverlay::initialise(int w, int h)
 {
+    FontParameters fp(fontName, 16, 400, false, 0, 0);
+    localFont.Create(fp);
+
+    _menuLayer = std::make_unique<MenuLayer>(localFont);
+    _menuLayer->init(wouterMenu, glm::vec2(0.0f));
+    _menuLayer->resize(w, h);
+
     mNextTick = 0;
 
     initialiseShaderEditor();
 
-    mWidth = w;
-    mHeight = h;
+    _width = w;
+    _height = h;
 
-    float w1 = mWidth, h1 = mHeight;
+    float w1 = _width, h1 = _height;
 
-    mMainEditor.SetSize(w1, h1);
+    mMainEditor.SetSize(w1 - sizes.sideBarWidth - sizes.scrollBarWidth, h1);
 
     mActiveEditor = &mMainEditor;
     mActiveEditor->Command(SCI_SETFOCUS, true);
@@ -296,19 +333,11 @@ void ShaderEditOverlay::initialise(int w, int h)
 
 void ShaderEditOverlay::resize(int w, int h)
 {
-    mWidth = w;
-    mHeight = h;
+    _width = w;
+    _height = h;
 
-    mMainEditor.DebugPrint();
-}
-
-void ShaderEditOverlay::reset()
-{
-    mMainEditor.Command(SCI_CANCEL);
-    mMainEditor.Command(SCI_CLEARALL);
-    mMainEditor.Command(SCI_EMPTYUNDOBUFFER);
-    mMainEditor.Command(SCI_SETFOCUS, true);
-    mMainEditor.Command(SCI_SETHSCROLLBAR, true);
+    _menuLayer->resize(w, h);
+    sizes.menuHeight = _menuLayer->menuHeight;
 }
 
 void BraceMatch(Editor &ed)
@@ -360,8 +389,6 @@ void BraceMatch(Editor &ed)
     }
 }
 
-const int scrollBarWidth = 15;
-
 void ShaderEditOverlay::renderFullscreen()
 {
     // update logic
@@ -373,51 +400,44 @@ void ShaderEditOverlay::renderFullscreen()
 
     BraceMatch(mMainEditor);
 
-    float w1 = mWidth, h1 = mHeight;
+    float w1 = _width, h1 = _height;
 
-    mMainEditor.SetSize(w1, h1);
+    mMainEditor.SetSize(w1 - sizes.sideBarWidth, h1);
 
     glUseProgram(0);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    glOrtho(0, mWidth, 0, mHeight, 0, 500);
-    glTranslatef(0, mHeight, 0);
+    glOrtho(0, _width, 0, _height, 0, 500);
+    glTranslatef(0, _height, 0);
     glScalef(1, -1, 1);
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
+    glPushMatrix();
     glPushAttrib(GL_ALL_ATTRIB_BITS);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glEnable(GL_CLIP_PLANE0);
-    glEnable(GL_CLIP_PLANE1);
-    glEnable(GL_CLIP_PLANE2);
-    glEnable(GL_CLIP_PLANE3);
-
-    glTranslatef(0.0f, 0, 0);
-
-    mMainEditor.Paint();
-
-    glPopAttrib();
-
-    if (_hoverScroll || _scrolling)
     {
-        float start, length;
-        mActiveEditor->GetScrollBar(start, length);
-
-        glBegin(GL_QUADS);
-        glColor4f(51.0f, 51.0f, 51.0f, _hoverScroll ? 255.0f : 155.0f);
-
-        glVertex2f(mWidth - scrollBarWidth, mHeight * start);
-        glVertex2f(mWidth, mHeight * start);
-        glVertex2f(mWidth, mHeight * (start + length));
-        glVertex2f(mWidth - scrollBarWidth, mHeight * (start + length));
-        glEnd();
+        EditorRender();
     }
+    glPopAttrib();
+    glPopMatrix();
+
+    glPushMatrix();
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    {
+        ScrollBarRender();
+    }
+    glPopAttrib();
+    glPopMatrix();
+
+    glPushMatrix();
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    {
+        _menuLayer->render(_inputState);
+    }
+    glPopAttrib();
+    glPopMatrix();
 }
 
 void ShaderEditOverlay::loadFile()
@@ -452,13 +472,196 @@ void ShaderEditOverlay::loadFile()
     mMainEditor.Command(SCI_GOTOPOS, 0);
 }
 
-bool isModEnabled(int mod, int modState)
+void ShaderEditOverlay::handleKeyDown(
+    const SDL_KeyboardEvent &event)
 {
-    int mask = ~(KMOD_NUM | KMOD_CAPS | KMOD_MODE | mod);
-    return (modState & mask) == 0 && ((modState & mod) != 0 || mod == 0);
+    UpdateMods(event);
+
+    if (_menuLayer->handleKeyDown(event, _inputState)) return;
+
+    if (ScrollBarHandleKeyDown(event)) return;
+
+    if (EditorHandleKeyDown(event)) return;
 }
 
-void ShaderEditOverlay::handleKeyDown(
+void ShaderEditOverlay::handleKeyUp(
+    const SDL_KeyboardEvent &event)
+{
+    UpdateMods(event);
+
+    if (_menuLayer->handleKeyUp(event, _inputState)) return;
+
+    if (ScrollBarHandleKeyUp(event)) return;
+
+    if (EditorHandleKeyUp(event)) return;
+}
+
+void ShaderEditOverlay::handleTextInput(
+    SDL_TextInputEvent &event)
+{
+    mActiveEditor->AddCharUTF(event.text, strlen(event.text));
+}
+
+void ShaderEditOverlay::handleMouseButtonInput(
+    const SDL_MouseButtonEvent &event)
+{
+    if (_menuLayer->handleMouseButtonInput(event, _inputState)) return;
+
+    if (ScrollBarHandleMouseButtonInput(event)) return;
+
+    if (EditorHandleMouseButtonInput(event)) return;
+}
+
+void ShaderEditOverlay::handleMouseMotionInput(
+    const SDL_MouseMotionEvent &event)
+{
+    _inputState.mouseX = event.x;
+    _inputState.mouseY = event.y;
+
+    if (_menuLayer->handleMouseMotionInput(event, _inputState)) return;
+
+    if (ScrollBarHandleMouseMotionInput(event)) return;
+
+    if (EditorHandleMouseMotionInput(event)) return;
+}
+
+void ShaderEditOverlay::handleMouseWheel(
+    const SDL_MouseWheelEvent &event)
+{
+    if (_menuLayer->handleMouseWheel(event, _inputState)) return;
+
+    if (ScrollBarHandleMouseWheel(event)) return;
+
+    if (EditorHandleMouseWheel(event)) return;
+}
+
+void ShaderEditOverlay::UpdateMods(
+    const SDL_KeyboardEvent &event)
+{
+    switch (event.keysym.sym)
+    {
+        case SDLK_LALT:
+        case SDLK_RALT:
+        case SDLK_LCTRL:
+        case SDLK_RCTRL:
+        case SDLK_LSHIFT:
+        case SDLK_RSHIFT:
+        {
+            _alt = event.keysym.mod & KMOD_LALT || event.keysym.mod & KMOD_RALT;
+            _ctrl = event.keysym.mod & KMOD_LCTRL || event.keysym.mod & KMOD_RCTRL;
+            _shift = event.keysym.mod & KMOD_LSHIFT || event.keysym.mod & KMOD_RSHIFT;
+            break;
+        }
+    }
+}
+
+///
+/// ScrollBar events from here
+///
+
+void ShaderEditOverlay::ScrollBarRender()
+{
+    auto scrollBarHeight = _height - sizes.menuHeight;
+
+    float start, length;
+    mActiveEditor->GetScrollBar(start, length);
+
+    glDisable(GL_TEXTURE_2D);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glBegin(GL_QUADS);
+    glColor4f(0.7f, 0.7f, 0.7f, _hoverScroll || _scrolling ? 1.0f : 0.4f);
+
+    glVertex2f(_width - sizes.scrollBarWidth, sizes.menuHeight + scrollBarHeight * start);
+    glVertex2f(_width, sizes.menuHeight + scrollBarHeight * start);
+    glVertex2f(_width, sizes.menuHeight + scrollBarHeight * (start + length));
+    glVertex2f(_width - sizes.scrollBarWidth, sizes.menuHeight + scrollBarHeight * (start + length));
+    glEnd();
+}
+
+bool ShaderEditOverlay::ScrollBarHandleKeyDown(
+    const SDL_KeyboardEvent &event)
+{
+    (void)event;
+
+    return false;
+}
+
+bool ShaderEditOverlay::ScrollBarHandleKeyUp(
+    const SDL_KeyboardEvent &event)
+{
+    (void)event;
+
+    return false;
+}
+
+bool ShaderEditOverlay::ScrollBarHandleMouseButtonInput(
+    const SDL_MouseButtonEvent &event)
+{
+    if (event.state == SDL_RELEASED)
+    {
+        _scrolling = false;
+    }
+
+    if (event.x > (_width - sizes.scrollBarWidth))
+    {
+        if (event.state == SDL_PRESSED)
+        {
+            _scrolling = true;
+            mActiveEditor->StartScroll(event.y);
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+bool ShaderEditOverlay::ScrollBarHandleMouseMotionInput(
+    const SDL_MouseMotionEvent &event)
+{
+    _hoverScroll = event.x > (_width - (sizes.scrollBarWidth * 5));
+
+    if (_scrolling)
+    {
+        mActiveEditor->Scroll(event.y, _height);
+
+        return true;
+    }
+
+    return false;
+}
+
+bool ShaderEditOverlay::ScrollBarHandleMouseWheel(
+    const SDL_MouseWheelEvent &event)
+{
+    (void)event;
+
+    return false;
+}
+
+///
+/// Editor events from here
+///
+
+void ShaderEditOverlay::EditorRender()
+{
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glEnable(GL_CLIP_PLANE0);
+    glEnable(GL_CLIP_PLANE1);
+    glEnable(GL_CLIP_PLANE2);
+    glEnable(GL_CLIP_PLANE3);
+
+    glTranslatef(sizes.sideBarWidth, sizes.menuHeight, 0);
+
+    mMainEditor.Paint();
+}
+
+bool ShaderEditOverlay::EditorHandleKeyDown(
     const SDL_KeyboardEvent &event)
 {
     int sciKey;
@@ -551,8 +754,6 @@ void ShaderEditOverlay::handleKeyDown(
         case SDLK_LCTRL:
         case SDLK_RCTRL:
             sciKey = 0;
-
-            _ctrl = event.keysym.mod & KMOD_LCTRL || event.keysym.mod & KMOD_RCTRL;
             break;
         default:
             sciKey = event.keysym.sym;
@@ -561,80 +762,48 @@ void ShaderEditOverlay::handleKeyDown(
     if (sciKey)
     {
         bool consumed;
-        bool ctrlPressed = event.keysym.mod & KMOD_LCTRL || event.keysym.mod & KMOD_RCTRL;
-        bool altPressed = event.keysym.mod & KMOD_LALT || event.keysym.mod & KMOD_RALT;
-        bool shiftPressed = event.keysym.mod & KMOD_LSHIFT || event.keysym.mod & KMOD_RSHIFT;
         mActiveEditor->KeyDown(
             (SDLK_a <= sciKey && sciKey <= SDLK_z) ? sciKey - 'a' + 'A' : sciKey,
-            shiftPressed,
-            ctrlPressed,
-            altPressed,
+            _shift,
+            _ctrl,
+            _alt,
             &consumed);
     }
+
+    return false;
 }
 
-void ShaderEditOverlay::handleKeyUp(
+bool ShaderEditOverlay::EditorHandleKeyUp(
     const SDL_KeyboardEvent &event)
 {
-    switch (event.keysym.sym)
-    {
-        case SDLK_LCTRL:
-        case SDLK_RCTRL:
-            _ctrl = event.keysym.mod & KMOD_LCTRL || event.keysym.mod & KMOD_RCTRL;
-            break;
-    }
+    (void)event;
+
+    return false;
 }
 
-void ShaderEditOverlay::handleTextInput(
-    SDL_TextInputEvent &event)
-{
-    mActiveEditor->AddCharUTF(event.text, strlen(event.text));
-}
-
-void ShaderEditOverlay::handleMouseButtonInput(
+bool ShaderEditOverlay::EditorHandleMouseButtonInput(
     const SDL_MouseButtonEvent &event)
 {
-    if (event.state == SDL_RELEASED)
+    if (event.state == SDL_PRESSED)
     {
-        _scrolling = false;
+        mActiveEditor->StartSelectionxy(event.x, event.y);
     }
 
-    if (event.x > (mWidth - scrollBarWidth))
-    {
-        if (event.state == SDL_PRESSED)
-        {
-            _scrolling = true;
-            mActiveEditor->StartScroll(event.y);
-        }
-    }
-    else
-    {
-        if (event.state == SDL_PRESSED)
-        {
-            mActiveEditor->StartSelectionxy(event.x, event.y);
-        }
-    }
+    return false;
 }
 
-void ShaderEditOverlay::handleMouseMotionInput(
+bool ShaderEditOverlay::EditorHandleMouseMotionInput(
     const SDL_MouseMotionEvent &event)
 {
-    _hoverScroll = event.x > (mWidth - scrollBarWidth - scrollBarWidth);
-
-    if (_scrolling)
-    {
-        mActiveEditor->Scroll(event.y, mHeight);
-
-        return;
-    }
-
     if (event.state == SDL_PRESSED)
     {
         mActiveEditor->ChangeSelectionxy(event.x, event.y);
     }
+
+    return false;
 }
 
-void ShaderEditOverlay::handleMouseWheel(
+bool ShaderEditOverlay::EditorHandleMouseWheel(
     const SDL_MouseWheelEvent &event)
 {
     if (_ctrl)
@@ -657,4 +826,6 @@ void ShaderEditOverlay::handleMouseWheel(
     {
         mActiveEditor->ScrollY(event.y * 4);
     }
+
+    return false;
 }

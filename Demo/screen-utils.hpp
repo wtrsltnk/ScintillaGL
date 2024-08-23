@@ -1,0 +1,62 @@
+#ifndef SCREEN_UTILS_HPP
+#define SCREEN_UTILS_HPP
+
+#include <glm/glm.hpp>
+
+namespace scr
+{
+
+    struct Padding
+    {
+        int Left;
+        int Top;
+        int Right;
+        int Bottom;
+    };
+
+    struct Margin
+    {
+        int Left;
+        int Top;
+        int Right;
+        int Bottom;
+    };
+
+    struct Rectangle
+    {
+        float left = 0.0f;
+        float right = 0.0f;
+        float top = 0.0f;
+        float bottom = 0.0f;
+
+        bool operator==(struct Rectangle &rc)
+        {
+            return (rc.left == left) && (rc.right == right) &&
+                   (rc.top == top) && (rc.bottom == bottom);
+        }
+        bool Contains(glm::vec2 pt)
+        {
+            return (pt.x >= left) && (pt.x <= right) &&
+                   (pt.y >= top) && (pt.y <= bottom);
+        }
+        bool Contains(struct Rectangle rc)
+        {
+            return (rc.left >= left) && (rc.right <= right) &&
+                   (rc.top >= top) && (rc.bottom <= bottom);
+        }
+        bool Intersects(struct Rectangle other)
+        {
+            return (right > other.left) && (left < other.right) &&
+                   (bottom > other.top) && (top < other.bottom);
+        }
+    };
+
+    enum class Direction
+    {
+        Horizontal,
+        Vertical,
+    };
+
+} // namespace scr
+
+#endif // SCREEN_UTILS_HPP

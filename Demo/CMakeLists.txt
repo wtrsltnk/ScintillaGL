@@ -13,7 +13,14 @@ target_sources(Demo
         "ShaderEditOverlay.cxx"
         "DefaultFontData.h"
         "ShaderEditOverlay.h"
+        "EditorEx.cpp"
+        "EditorEx.hpp"
         "stb_truetype.h"
+        "stbtt_font.hpp"
+        "MenuLayer.cpp"
+        "MenuLayer.hpp"
+        "iscreenlayer.hpp"
+        "screen-utils.hpp"
 )
 
 target_compile_features(Demo
@@ -33,6 +40,7 @@ target_include_directories(Demo
 
 target_link_libraries(Demo
     PRIVATE
+        glm
         SDL2-static
         scintilla
         winmm.lib

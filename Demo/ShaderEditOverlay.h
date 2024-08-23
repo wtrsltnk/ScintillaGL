@@ -1,108 +1,26 @@
 #pragma once
 
+#include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
-#include <assert.h>
-
-
 
 #include <time.h>
-
-
-#include <string>
-#include <vector>
-#include <map>
 
 #include <SDL.h>
 #include <glad/glad.h>
 
-#include "Platform.h"
+#include "EditorEx.hpp"
 
-#include "ILexer.h"
-#include "Scintilla.h"
-#include "SVector.h"
-#include "SplitVector.h"
-#include "Partitioning.h"
-#include "RunStyles.h"
-#include "ContractionState.h"
-#include "CellBuffer.h"
-#include "KeyMap.h"
+#include "menulayer.hpp"
 
-
-
-#include "Indicator.h"
-#include "XPM.h"
-#include "LineMarker.h"
-
-
-
-
-
-#include "Style.h"
-#include "ViewStyle.h"
-#include "Decoration.h"
-#include "CharClassify.h"
-
-
-#include "Document.h"
-#include "Selection.h"
-#include "PositionCache.h"
-#include "Editor.h"
-
-
-
-#include "UniConversion.h"
-
-#include "SciLexer.h"
-#include "LexerModule.h"
-
-
-#include "Catalogue.h"
-
-#include <iostream>
+extern struct stbtt_Font defaultFont;
 
 class LexState;
 
-class EditorEx : public Editor
-{
-public:
-    void DebugPrint()
-    {
-        std::cout << posTopLine << std::endl;
-        std::cout << pdoc->LinesTotal() << std::endl;
-        std::cout << LinesOnScreen() << std::endl;
-    }
 
-    void GetScrollBar(
-        float &start,
-        float &length)
-    {
-        start = topLine / static_cast<float>(pdoc->LinesTotal());
-        length = LinesOnScreen() / static_cast<float>(pdoc->LinesTotal());
-    }
 
-    int startValue = 0;
-    void StartScroll(int value)
-    {
-        startValue = value;
-    }
 
-    void Scroll(int value, int height)
-    {
-        auto a = (pdoc->LinesTotal() / (float)height);
-
-        auto amount = (int)(startValue - value) * a;
-
-        if (amount == 0)
-        {
-            return;
-        }
-
-        ScrollY(amount);
-        startValue = value;
-    }
-};
 
 class ShaderEditOverlay
 {
@@ -135,7 +53,6 @@ public:
 private:
     void initialiseShaderEditor();
 
-private:
     static const size_t TICK_INTERVAL = 100;
 
     bool mRequireReset = false;
@@ -147,10 +64,39 @@ private:
     EditorEx mMainEditor;
     EditorEx *mActiveEditor = nullptr;
 
-    float mWidth = 0.0f;
-    float mHeight = 0.0f;
+    float _width = 0.0f;
+    float _height = 0.0f;
     bool _ctrl = false;
+    bool _shift = false;
+    bool _alt = false;
     bool _scrolling = false;
     bool _hoverScroll = false;
     int _fontSize = 20;
+    struct InputState _inputState;
+    static std::vector<LocalMenuItem> wouterMenu;
+
+    struct
+    {
+        int menuHeight = 30;
+        int sideBarWidth = 0;
+        int scrollBarWidth = 15;
+    } sizes;
+
+    std::unique_ptr<MenuLayer> _menuLayer;
+
+    void UpdateMods(const SDL_KeyboardEvent &event);
+
+    void ScrollBarRender();
+    bool ScrollBarHandleKeyDown(const SDL_KeyboardEvent &event);
+    bool ScrollBarHandleKeyUp(const SDL_KeyboardEvent &event);
+    bool ScrollBarHandleMouseButtonInput(const SDL_MouseButtonEvent &event);
+    bool ScrollBarHandleMouseMotionInput(const SDL_MouseMotionEvent &event);
+    bool ScrollBarHandleMouseWheel(const SDL_MouseWheelEvent &event);
+
+    void EditorRender();
+    bool EditorHandleKeyDown(const SDL_KeyboardEvent &event);
+    bool EditorHandleKeyUp(const SDL_KeyboardEvent &event);
+    bool EditorHandleMouseButtonInput(const SDL_MouseButtonEvent &event);
+    bool EditorHandleMouseMotionInput(const SDL_MouseMotionEvent &event);
+    bool EditorHandleMouseWheel(const SDL_MouseWheelEvent &event);
 };
