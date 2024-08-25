@@ -15,6 +15,9 @@ public:
     virtual void render(const struct InputState &inputState);
     virtual void resize(int x, int y, int w, int h);
 
+    virtual int width();
+    virtual int height();
+
     virtual bool handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState);
     virtual bool handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState &inputState);
     virtual bool handleTextInput(SDL_TextInputEvent &event, const struct InputState &inputState);

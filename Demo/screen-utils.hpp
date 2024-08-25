@@ -71,6 +71,6 @@ namespace scr
         Vertical,
     };
 
-} // namespace scr
+}; // namespace scr
 
 #endif // SCREEN_UTILS_HPP

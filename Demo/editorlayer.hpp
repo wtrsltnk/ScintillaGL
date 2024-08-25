@@ -1,20 +1,19 @@
-#ifndef MENULAYER_HPP
-#define MENULAYER_HPP
+#ifndef EDITORLAYER_HPP
+#define EDITORLAYER_HPP
 
-#include "Platform.h"
 #include "iscreenlayer.hpp"
-#include "localmenuitem.hpp"
-#include "screen-utils.hpp"
-#include <memory>
-#include <vector>
+#include "scrollbarlayer.hpp"
+#include <glm/glm.hpp>
 
-class MenuLayer : public IScreenLayer
+#include "EditorEx.hpp"
+
+class EditorLayer : public IScreenLayer
 {
 public:
-    MenuLayer(std::unique_ptr<Font> &font);
-    virtual ~MenuLayer() = default;
+    EditorLayer();
+    virtual ~EditorLayer() = default;
 
-    bool init(const std::vector<LocalMenuItem> &menuItems, const glm::vec2 &origin);
+    bool init(const glm::vec2 &origin);
 
     virtual void render(const struct InputState &inputState);
     virtual void resize(int x, int y, int w, int h);
@@ -29,22 +28,23 @@ public:
     virtual bool handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState);
     virtual bool handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState);
 
+    void loadContent(const std::string &content);
+
 private:
-    std::unique_ptr<Font> &_font;
     int _width = 0.0f;
     int _height = 0.0f;
     glm::vec2 _origin;
-    std::unique_ptr<MenuLayer> _openSubMenu;
-    std::string _subMenuParentName;
 
-    std::vector<LocalMenuItem> _menuItems;
+    std::unique_ptr<ScrollBarLayer> _scrollBarLayer;
 
-    int menuHeight = 30;
-    struct scr::Padding menuItemPadding;
-    struct scr::Margin menuItemMargin;
-    scr::Direction _direction = scr::Direction::Horizontal;
+    EditorEx mMainEditor;
+    EditorEx *mActiveEditor = nullptr;
 
-    scr::Rectangle GetBorderRectangle(const LocalMenuItem &menuItem, float &x, float &y);
+    int _fontSize = 20;
+
+    std::unique_ptr<class LexState> mLexer;
+
+    void initialiseShaderEditor();
 };
 
-#endif // MENULAYER_HPP
+#endif // EDITORLAYER_HPP

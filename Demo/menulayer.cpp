@@ -10,14 +10,14 @@ const int menuRowHeight = 30;
 const float maxWidth = 130.0f;
 
 void DrawTextBase(
-    Font &font_,
+    std::unique_ptr<Font> &font_,
     float xbase,
     float ybase,
     const char *s,
     size_t len,
     glm::vec4 fore)
 {
-    stbtt_Font *realFont = (stbtt_Font *)font_.GetID();
+    stbtt_Font *realFont = (stbtt_Font *)font_->GetID();
     glEnable(GL_TEXTURE_2D);
     // glEnable(GL_BLEND);
     // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -50,11 +50,11 @@ void DrawTextBase(
 }
 
 float WidthText(
-    Font &font_,
+    std::unique_ptr<Font> &font_,
     const char *s,
     size_t len)
 {
-    stbtt_Font *realFont = (stbtt_Font *)font_.GetID();
+    stbtt_Font *realFont = (stbtt_Font *)font_->GetID();
     // TODO: implement proper UTF-8 handling
     float position = 0;
     while (len--)
@@ -66,7 +66,7 @@ float WidthText(
     return position;
 }
 
-MenuLayer::MenuLayer(Font &font) : _font(font) {}
+MenuLayer::MenuLayer(std::unique_ptr<Font> &font) : _font(font) {}
 
 bool MenuLayer::init(const std::vector<LocalMenuItem> &menuItems, const glm::vec2 &origin)
 {
@@ -195,25 +195,39 @@ void MenuLayer::resize(int x, int y, int w, int h)
 
     menuHeight = menuRowHeight;
 
+    float tmpX = x;
+    float tmpY = y;
+
     for (const auto &menuItem : _menuItems)
     {
-        auto border = GetBorderRectangle(menuItem, x, y);
+        auto border = GetBorderRectangle(menuItem, tmpX, tmpY);
 
         if (border.right > _width)
         {
-            border.right -= x;
-            menuHeight += menuRowHeight;
+            border.right -= tmpX;
         }
 
         if (_direction == scr::Direction::Horizontal)
         {
-            x = border.right;
+            tmpX = border.right;
         }
         else if (_direction == scr::Direction::Vertical)
         {
-            y += menuRowHeight;
+            tmpY += menuRowHeight;
         }
+
+        menuHeight = border.bottom;
     }
+}
+
+int MenuLayer::width()
+{
+    return _width;
+}
+
+int MenuLayer::height()
+{
+    return menuHeight;
 }
 
 bool MenuLayer::handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState)
@@ -375,8 +389,8 @@ bool MenuLayer::handleMouseWheel(const SDL_MouseWheelEvent &event, const struct 
 
 scr::Rectangle MenuLayer::GetBorderRectangle(
     const LocalMenuItem &menuItem,
-    float x,
-    float y)
+    float &x,
+    float &y)
 {
     float width = WidthText(_font, menuItem.name.c_str(), menuItem.name.size());
 

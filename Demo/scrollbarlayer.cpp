@@ -45,6 +45,16 @@ void ScrollBarLayer::resize(int x, int y, int w, int h)
     _origin.y = y;
 }
 
+int ScrollBarLayer::width()
+{
+    return _width;
+}
+
+int ScrollBarLayer::height()
+{
+    return _height;
+}
+
 bool ScrollBarLayer::handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState)
 {
     (void)event;

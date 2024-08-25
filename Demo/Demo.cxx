@@ -1,7 +1,8 @@
 // A simple demonstration application using Scintilla
 #define SDL_MAIN_HANDLED
 
-#include "ShaderEditOverlay.h"
+#include "Scintilla.h"
+#include "ShaderEditOverlay.hpp"
 #include <SDL.h>
 #include <SDL_syswm.h>
 #include <iostream>
