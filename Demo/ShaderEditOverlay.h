@@ -13,6 +13,7 @@
 #include "EditorEx.hpp"
 
 #include "menulayer.hpp"
+#include "scrollbarlayer.hpp"
 
 extern struct stbtt_Font defaultFont;
 
@@ -61,6 +62,8 @@ private:
 
     LexState *mLexer = nullptr;
 
+    Font localFont;
+
     EditorEx mMainEditor;
     EditorEx *mActiveEditor = nullptr;
 
@@ -79,19 +82,12 @@ private:
     {
         int menuHeight = 30;
         int sideBarWidth = 0;
-        int scrollBarWidth = 15;
     } sizes;
 
     std::unique_ptr<MenuLayer> _menuLayer;
+    std::unique_ptr<ScrollBarLayer> _scrollBarLayer;
 
     void UpdateMods(const SDL_KeyboardEvent &event);
-
-    void ScrollBarRender();
-    bool ScrollBarHandleKeyDown(const SDL_KeyboardEvent &event);
-    bool ScrollBarHandleKeyUp(const SDL_KeyboardEvent &event);
-    bool ScrollBarHandleMouseButtonInput(const SDL_MouseButtonEvent &event);
-    bool ScrollBarHandleMouseMotionInput(const SDL_MouseMotionEvent &event);
-    bool ScrollBarHandleMouseWheel(const SDL_MouseWheelEvent &event);
 
     void EditorRender();
     bool EditorHandleKeyDown(const SDL_KeyboardEvent &event);

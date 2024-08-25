@@ -6,21 +6,23 @@ add_executable(Demo WIN32)
 
 target_sources(Demo
     PRIVATE
-        "Demo.cxx"
         "../external/glad.c"
         "DefaultFontData.cpp"
-        "ScPlatform.cxx"
-        "ShaderEditOverlay.cxx"
         "DefaultFontData.h"
-        "ShaderEditOverlay.h"
+        "Demo.cxx"
         "EditorEx.cpp"
         "EditorEx.hpp"
-        "stb_truetype.h"
-        "stbtt_font.hpp"
         "MenuLayer.cpp"
         "MenuLayer.hpp"
+        "ScPlatform.cxx"
+        "ShaderEditOverlay.cxx"
+        "ShaderEditOverlay.h"
         "iscreenlayer.hpp"
         "screen-utils.hpp"
+        "scrollbarlayer.cpp"
+        "scrollbarlayer.hpp"
+        "stb_truetype.h"
+        "stbtt_font.hpp"
 )
 
 target_compile_features(Demo

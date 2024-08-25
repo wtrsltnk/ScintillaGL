@@ -19,11 +19,11 @@ void EditorEx::StartScroll(int value)
     startValue = value;
 }
 
-void EditorEx::Scroll(int value, int height)
+void EditorEx::Scroll(int diff, int height)
 {
     auto a = (pdoc->LinesTotal() / (float)height);
 
-    auto amount = (int)(startValue - value) * a;
+    auto amount = (int)(diff * a);
 
     if (amount == 0)
     {
@@ -31,7 +31,6 @@ void EditorEx::Scroll(int value, int height)
     }
 
     ScrollY(amount);
-    startValue = value;
 }
 
 void EditorEx::Reset()

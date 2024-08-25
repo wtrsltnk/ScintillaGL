@@ -18,7 +18,7 @@ public:
     virtual ~IScreenLayer() = default;
 
     virtual void render(const struct InputState& inputState) = 0;
-    virtual void resize(int w, int h) = 0;
+    virtual void resize(int x, int y, int w, int h) = 0;
 
     virtual bool handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState& inputState) = 0;
     virtual bool handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState& inputState) = 0;

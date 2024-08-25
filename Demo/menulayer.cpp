@@ -87,7 +87,7 @@ void MenuLayer::render(const struct InputState &inputState)
     float x = _origin.x;
     float y = _origin.y;
     glm::vec4 textFore = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    glm::vec4 textForeDisabled = glm::vec4(0.6f, 0.6f, 0.6f, 0.21f);
+    glm::vec4 textForeDisabled = glm::vec4(0.6f, 0.6f, 0.6f, 0.4f);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -95,9 +95,18 @@ void MenuLayer::render(const struct InputState &inputState)
     const std::string subMenuPointer(">");
     float subMenuPointerWidth = WidthText(_font, subMenuPointer.c_str(), subMenuPointer.size());
 
+    scr::Rectangle menuRect;
+    menuRect.left = menuRect.right = _origin.x;
+    menuRect.top = menuRect.bottom = _origin.y;
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     for (const auto &menuItem : _menuItems)
     {
         auto border = GetBorderRectangle(menuItem, x, y);
+
+        menuRect += border;
 
         float xbase = x + menuItemMargin.Left + menuItemPadding.Left;
         float ybase = y + menuItemMargin.Top + menuItemPadding.Top;
@@ -105,14 +114,11 @@ void MenuLayer::render(const struct InputState &inputState)
         bool hover = inputState.mouseY > border.top && inputState.mouseX > border.left &&
                      inputState.mouseY < border.bottom && inputState.mouseX < border.right;
 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
         glBegin(GL_QUADS);
 
         if (hover)
         {
-            glColor4f(0.7f, 0.7f, 0.7f, 0.9f);
+            glColor4f(0.4f, 0.4f, 0.4f, 1.0f);
         }
         else
         {
@@ -143,74 +149,50 @@ void MenuLayer::render(const struct InputState &inputState)
         }
     }
 
+    if (_direction == scr::Direction::Horizontal)
+    {
+        menuRect.right = menuRect.left + _width;
+    }
+
+    glBegin(GL_LINE_LOOP);
+
+    glColor4f(0.1f, 0.1f, 0.1f, 0.9f);
+
+    glVertex2f(menuRect.left, menuRect.top);
+    glVertex2f(menuRect.right, menuRect.top);
+    glVertex2f(menuRect.right, menuRect.bottom);
+    glVertex2f(menuRect.left, menuRect.bottom);
+    glEnd();
+
     if (_openSubMenu != nullptr)
     {
         _openSubMenu->render(inputState);
     }
-
-    // for (const auto &openMenu : openMenus)
-    // {
-    //     x = openMenu.rect.left;
-    //     y = openMenu.rect.bottom;
-
-    //     float maxWidth = 130.0f;
-
-    //     for (const auto &subMenuItem : openMenu.menuItem->subMenu)
-    //     {
-    //         glm::vec4 border;
-    //         border.top = y;
-    //         border.bottom = border.top + menuRowHeight;
-    //         border.left = x;
-    //         border.right = x + maxWidth + menuItemMargin.Left + menuItemPadding.Left + menuItemMargin.Right + menuItemPadding.Right;
-
-    //         bool hover = inputState.mouseY > border.top && inputState.mouseX > border.left &&
-    //                      inputState.mouseY < border.bottom && inputState.mouseX < border.right;
-
-    //         glEnable(GL_BLEND);
-    //         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    //         glBegin(GL_QUADS);
-    //         if (hover)
-    //         {
-    //             glColor4f(0.7f, 0.7f, 0.7f, 0.9f);
-    //         }
-    //         else
-    //         {
-    //             glColor4f(0.4f, 0.4f, 0.4f, 0.9f);
-    //         }
-
-    //         glVertex2f(border.left, border.top);
-    //         glVertex2f(border.right, border.top);
-    //         glVertex2f(border.right, border.bottom);
-    //         glVertex2f(border.left, border.bottom);
-    //         glEnd();
-
-    //         glm::vec4 rc;
-    //         rc.top = y + menuItemMargin.Top + menuItemPadding.Top;
-    //         rc.bottom = rc.top + (float)menuRowHeight;
-    //         rc.left = x + menuItemMargin.Left + menuItemPadding.Left;
-    //         rc.right = rc.left + maxWidth;
-
-    //         DrawTextBase(rc, _font, rc.top + 14.0f, subMenuItem.name.c_str(), subMenuItem.name.size(), subMenuItem.enabled ? textFore : textForeDisabled);
-
-    //         if (!subMenuItem.subMenu.empty())
-    //         {
-    //             rc.left = border.right - menuItemMargin.Right - menuItemPadding.Right - subMenuPointerWidth;
-    //             DrawTextBase(rc, _font, rc.top + 14.0f, subMenuPointer.c_str(), subMenuPointer.size(), subMenuItem.enabled ? textFore : textForeDisabled);
-    //         }
-
-    //         y += menuRowHeight;
-    //     }
-    // }
 }
 
-void MenuLayer::resize(int w, int h)
+void MenuLayer::resize(int x, int y, int w, int h)
 {
     _width = w;
     _height = h;
 
-    float x = _origin.x;
-    float y = _origin.y;
+    if (x >= 0)
+    {
+        _origin.x = (float)x;
+    }
+    else
+    {
+        x = _origin.x;
+    }
+
+    if (y >= 0)
+    {
+        _origin.y = (float)y;
+    }
+    else
+    {
+        y = _origin.y;
+    }
+
     menuHeight = menuRowHeight;
 
     for (const auto &menuItem : _menuItems)
@@ -307,7 +289,7 @@ bool MenuLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, const 
                     {
                         _openSubMenu->init(menuItem.subMenu, glm::vec2(border.right, border.top));
                     }
-                    _openSubMenu->resize(_width, _height);
+                    _openSubMenu->resize(-1, -1, _width, _height);
                     _openSubMenu->_direction = scr::Direction::Vertical;
                 }
 
@@ -324,6 +306,7 @@ bool MenuLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, const 
             }
         }
 
+        _subMenuParentName = std::string();
         _openSubMenu.release();
     }
 
@@ -361,7 +344,7 @@ bool MenuLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &event, const 
                     {
                         _openSubMenu->init(menuItem.subMenu, glm::vec2(border.right, border.top));
                     }
-                    _openSubMenu->resize(_width, _height);
+                    _openSubMenu->resize(-1, -1, _width, _height);
                     _openSubMenu->_direction = scr::Direction::Vertical;
                 }
 

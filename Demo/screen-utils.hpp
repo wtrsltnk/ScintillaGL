@@ -34,16 +34,30 @@ namespace scr
             return (rc.left == left) && (rc.right == right) &&
                    (rc.top == top) && (rc.bottom == bottom);
         }
+
+        const struct Rectangle &operator+=(struct Rectangle &rc)
+        {
+            if (rc.left < left) left = rc.left;
+            if (rc.top < top) top = rc.top;
+
+            if (rc.right > right) right = rc.right;
+            if (rc.bottom > bottom) bottom = rc.bottom;
+
+            return *this;
+        }
+
         bool Contains(glm::vec2 pt)
         {
             return (pt.x >= left) && (pt.x <= right) &&
                    (pt.y >= top) && (pt.y <= bottom);
         }
+
         bool Contains(struct Rectangle rc)
         {
             return (rc.left >= left) && (rc.right <= right) &&
                    (rc.top >= top) && (rc.bottom <= bottom);
         }
+
         bool Intersects(struct Rectangle other)
         {
             return (right > other.left) && (left < other.right) &&

@@ -273,8 +273,6 @@ void ShaderEditOverlay::initialiseShaderEditor()
     SetAStyle(mMainEditor, SCE_C_COMMENTDOCKEYWORDERROR, MakeRGBA(168, 171, 176), 0xFF333333);
 }
 
-static Font localFont;
-
 std::vector<LocalMenuItem> ShaderEditOverlay::wouterMenu = {
     LocalMenuItem(
         "File",
@@ -310,7 +308,17 @@ void ShaderEditOverlay::initialise(int w, int h)
 
     _menuLayer = std::make_unique<MenuLayer>(localFont);
     _menuLayer->init(wouterMenu, glm::vec2(0.0f));
-    _menuLayer->resize(w, h);
+    _menuLayer->resize(0, 0, w, h);
+
+    _scrollBarLayer = std::make_unique<ScrollBarLayer>();
+    _scrollBarLayer->init(glm::vec2(0.0f, _menuLayer->menuHeight));
+    _scrollBarLayer->resize(0, _menuLayer->menuHeight, w, h);
+    _scrollBarLayer->onScrollY = [&](int diff) {
+        mActiveEditor->Scroll(diff, _height);
+    };
+    _scrollBarLayer->getScrollInfo = [&](float &start, float &length) {
+        mActiveEditor->GetScrollBar(start, length);
+    };
 
     mNextTick = 0;
 
@@ -321,7 +329,7 @@ void ShaderEditOverlay::initialise(int w, int h)
 
     float w1 = _width, h1 = _height;
 
-    mMainEditor.SetSize(w1 - sizes.sideBarWidth - sizes.scrollBarWidth, h1);
+    mMainEditor.SetSize(w1 - sizes.sideBarWidth, h1 - _menuLayer->menuHeight);
 
     mActiveEditor = &mMainEditor;
     mActiveEditor->Command(SCI_SETFOCUS, true);
@@ -336,7 +344,9 @@ void ShaderEditOverlay::resize(int w, int h)
     _width = w;
     _height = h;
 
-    _menuLayer->resize(w, h);
+    _menuLayer->resize(0, 0, w, h);
+    _scrollBarLayer->resize(0, _menuLayer->menuHeight, w, h);
+
     sizes.menuHeight = _menuLayer->menuHeight;
 }
 
@@ -426,7 +436,7 @@ void ShaderEditOverlay::renderFullscreen()
     glPushMatrix();
     glPushAttrib(GL_ALL_ATTRIB_BITS);
     {
-        ScrollBarRender();
+        _scrollBarLayer->render(_inputState);
     }
     glPopAttrib();
     glPopMatrix();
@@ -479,7 +489,7 @@ void ShaderEditOverlay::handleKeyDown(
 
     if (_menuLayer->handleKeyDown(event, _inputState)) return;
 
-    if (ScrollBarHandleKeyDown(event)) return;
+    if (_scrollBarLayer->handleKeyDown(event, _inputState)) return;
 
     if (EditorHandleKeyDown(event)) return;
 }
@@ -491,7 +501,7 @@ void ShaderEditOverlay::handleKeyUp(
 
     if (_menuLayer->handleKeyUp(event, _inputState)) return;
 
-    if (ScrollBarHandleKeyUp(event)) return;
+    if (_scrollBarLayer->handleKeyUp(event, _inputState)) return;
 
     if (EditorHandleKeyUp(event)) return;
 }
@@ -507,7 +517,7 @@ void ShaderEditOverlay::handleMouseButtonInput(
 {
     if (_menuLayer->handleMouseButtonInput(event, _inputState)) return;
 
-    if (ScrollBarHandleMouseButtonInput(event)) return;
+    if (_scrollBarLayer->handleMouseButtonInput(event, _inputState)) return;
 
     if (EditorHandleMouseButtonInput(event)) return;
 }
@@ -520,7 +530,7 @@ void ShaderEditOverlay::handleMouseMotionInput(
 
     if (_menuLayer->handleMouseMotionInput(event, _inputState)) return;
 
-    if (ScrollBarHandleMouseMotionInput(event)) return;
+    if (_scrollBarLayer->handleMouseMotionInput(event, _inputState)) return;
 
     if (EditorHandleMouseMotionInput(event)) return;
 }
@@ -530,7 +540,7 @@ void ShaderEditOverlay::handleMouseWheel(
 {
     if (_menuLayer->handleMouseWheel(event, _inputState)) return;
 
-    if (ScrollBarHandleMouseWheel(event)) return;
+    if (_scrollBarLayer->handleMouseWheel(event, _inputState)) return;
 
     if (EditorHandleMouseWheel(event)) return;
 }
@@ -553,93 +563,6 @@ void ShaderEditOverlay::UpdateMods(
             break;
         }
     }
-}
-
-///
-/// ScrollBar events from here
-///
-
-void ShaderEditOverlay::ScrollBarRender()
-{
-    auto scrollBarHeight = _height - sizes.menuHeight;
-
-    float start, length;
-    mActiveEditor->GetScrollBar(start, length);
-
-    glDisable(GL_TEXTURE_2D);
-
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glBegin(GL_QUADS);
-    glColor4f(0.7f, 0.7f, 0.7f, _hoverScroll || _scrolling ? 1.0f : 0.4f);
-
-    glVertex2f(_width - sizes.scrollBarWidth, sizes.menuHeight + scrollBarHeight * start);
-    glVertex2f(_width, sizes.menuHeight + scrollBarHeight * start);
-    glVertex2f(_width, sizes.menuHeight + scrollBarHeight * (start + length));
-    glVertex2f(_width - sizes.scrollBarWidth, sizes.menuHeight + scrollBarHeight * (start + length));
-    glEnd();
-}
-
-bool ShaderEditOverlay::ScrollBarHandleKeyDown(
-    const SDL_KeyboardEvent &event)
-{
-    (void)event;
-
-    return false;
-}
-
-bool ShaderEditOverlay::ScrollBarHandleKeyUp(
-    const SDL_KeyboardEvent &event)
-{
-    (void)event;
-
-    return false;
-}
-
-bool ShaderEditOverlay::ScrollBarHandleMouseButtonInput(
-    const SDL_MouseButtonEvent &event)
-{
-    if (event.state == SDL_RELEASED)
-    {
-        _scrolling = false;
-    }
-
-    if (event.x > (_width - sizes.scrollBarWidth))
-    {
-        if (event.state == SDL_PRESSED)
-        {
-            _scrolling = true;
-            mActiveEditor->StartScroll(event.y);
-        }
-
-        return true;
-    }
-
-    return false;
-}
-
-bool ShaderEditOverlay::ScrollBarHandleMouseMotionInput(
-    const SDL_MouseMotionEvent &event)
-{
-    _hoverScroll = event.x > (_width - (sizes.scrollBarWidth * 5));
-
-    if (_scrolling)
-    {
-        mActiveEditor->Scroll(event.y, _height);
-
-        return true;
-    }
-
-    return false;
-}
-
-bool ShaderEditOverlay::ScrollBarHandleMouseWheel(
-    const SDL_MouseWheelEvent &event)
-{
-    (void)event;
-
-    return false;
 }
 
 ///
@@ -786,7 +709,7 @@ bool ShaderEditOverlay::EditorHandleMouseButtonInput(
 {
     if (event.state == SDL_PRESSED)
     {
-        mActiveEditor->StartSelectionxy(event.x, event.y);
+        mActiveEditor->StartSelectionxy(event.x - sizes.sideBarWidth, event.y - _menuLayer->menuHeight);
     }
 
     return false;
