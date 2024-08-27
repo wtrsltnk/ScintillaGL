@@ -27,8 +27,6 @@ public:
     void handleMouseMotionInput(const SDL_MouseMotionEvent &event);
     void handleMouseWheel(const SDL_MouseWheelEvent &event);
 
-    void loadFile();
-
     void renderFullscreen();
 
 private:
@@ -43,7 +41,7 @@ private:
     static std::vector<LocalMenuItem> wouterMenu;
 
     std::shared_ptr<class MenuLayer> _menuLayer;
-    std::shared_ptr<class EditorLayer> _editorLayer;
+    std::shared_ptr<class TabbedEditorsLayer> _tabbedEditorsLayer;
     std::vector<std::weak_ptr<IScreenLayer>> _layers;
 
     void UpdateMods(const SDL_KeyboardEvent &event);

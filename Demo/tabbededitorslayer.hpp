@@ -1,20 +1,20 @@
-#ifndef MENULAYER_HPP
-#define MENULAYER_HPP
+#ifndef TABBEDEDITORSLAYER_HPP
+#define TABBEDEDITORSLAYER_HPP
 
-#include "Platform.h"
+#include "editorlayer.hpp"
 #include "iscreenlayer.hpp"
-#include "localmenuitem.hpp"
 #include "screen-utils.hpp"
+#include <glm/glm.hpp>
 #include <memory>
 #include <vector>
 
-class MenuLayer : public IScreenLayer
+class TabbedEditorsLayer : public IScreenLayer
 {
 public:
-    MenuLayer(std::unique_ptr<Font> &font);
-    virtual ~MenuLayer() = default;
+    TabbedEditorsLayer(std::unique_ptr<Font> &font);
+    virtual ~TabbedEditorsLayer() = default;
 
-    bool init(const std::vector<LocalMenuItem> &menuItems, const glm::vec2 &origin);
+    bool init(const glm::vec2 &origin);
 
     virtual void render(const struct InputState &inputState);
     virtual void resize(int x, int y, int w, int h);
@@ -29,23 +29,19 @@ public:
     virtual bool handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState);
     virtual bool handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState);
 
+    struct scr::Padding tabItemPadding;
+    struct scr::Margin tabItemMargin;
+
+    void loadFile(const std::string &fileName);
 private:
     std::unique_ptr<Font> &_font;
     int _width = 0.0f;
     int _height = 0.0f;
     glm::vec2 _origin;
-    std::unique_ptr<MenuLayer> _openSubMenu;
-    std::string _subMenuParentName;
-    bool _mouseDownOnMenuItem = false;
+    std::vector<std::unique_ptr<EditorLayer>> _tabs;
+    size_t _activeTab = 0;
 
-    std::vector<LocalMenuItem> _menuItems;
-
-    int menuHeight = 30;
-    struct scr::Padding menuItemPadding;
-    struct scr::Margin menuItemMargin;
-    scr::Direction _direction = scr::Direction::Horizontal;
-
-    scr::Rectangle GetBorderRectangle(const LocalMenuItem &menuItem, float &x, float &y);
+    scr::Rectangle GetBorderRectangle(const std::unique_ptr<EditorLayer> &tab, float &x, float &y);
 };
 
-#endif // MENULAYER_HPP
+#endif // TABBEDEDITORSLAYER_HPP

@@ -30,15 +30,14 @@ public:
 
     void loadContent(const std::string &content);
 
+    std::string title;
 private:
     int _width = 0.0f;
     int _height = 0.0f;
     glm::vec2 _origin;
 
-    std::unique_ptr<ScrollBarLayer> _scrollBarLayer;
-
+    ScrollBarLayer _scrollBarLayer;
     EditorEx mMainEditor;
-    EditorEx *mActiveEditor = nullptr;
 
     int _fontSize = 20;
 
@@ -46,5 +45,7 @@ private:
 
     void initialiseShaderEditor();
 };
+
+
 
 #endif // EDITORLAYER_HPP

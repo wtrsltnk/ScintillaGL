@@ -2,6 +2,7 @@
 #include "scrollbarlayer.hpp"
 
 #include <glad/glad.h>
+#include <iostream>
 
 bool ScrollBarLayer::init(const glm::vec2 &origin)
 {
@@ -13,8 +14,6 @@ bool ScrollBarLayer::init(const glm::vec2 &origin)
 void ScrollBarLayer::render(const struct InputState &inputState)
 {
     (void)inputState;
-
-    auto scrollBarHeight = _height - _origin.y;
 
     float start = 0.0f, length = _height;
     if (getScrollInfo)
@@ -30,10 +29,19 @@ void ScrollBarLayer::render(const struct InputState &inputState)
     glBegin(GL_QUADS);
     glColor4f(0.7f, 0.7f, 0.7f, _hoverScroll || _scrolling ? 1.0f : 0.4f);
 
-    glVertex2f(_width - scrollBarWidth, _origin.y + scrollBarHeight * start);
-    glVertex2f(_width, _origin.y + scrollBarHeight * start);
-    glVertex2f(_width, _origin.y + scrollBarHeight * (start + length));
-    glVertex2f(_width - scrollBarWidth, _origin.y + scrollBarHeight * (start + length));
+    glVertex2f(_width - scrollBarWidth, _origin.y + _height * start);
+    glVertex2f(_width, _origin.y + _height * start);
+    glVertex2f(_width, _origin.y + _height * (start + length));
+    glVertex2f(_width - scrollBarWidth, _origin.y + _height * (start + length));
+    glEnd();
+
+    glBegin(GL_LINE_LOOP);
+    glColor4f(0.0f, 0.0f, 0.0f, _hoverScroll || _scrolling ? 1.0f : 0.4f);
+
+    glVertex2f(_width - scrollBarWidth, _origin.y + _height * start);
+    glVertex2f(_width, _origin.y + _height * start);
+    glVertex2f(_width, _origin.y + _height * (start + length));
+    glVertex2f(_width - scrollBarWidth, _origin.y + _height * (start + length));
     glEnd();
 }
 
@@ -83,17 +91,14 @@ bool ScrollBarLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, c
 {
     (void)inputState;
 
-    if (event.state == SDL_RELEASED)
-    {
-        _scrolling = false;
-    }
+    _scrolling = false;
 
-    if (event.x > (_width - scrollBarWidth))
+    if ((event.x - _origin.x) > (_width - scrollBarWidth))
     {
         if (event.state == SDL_PRESSED)
         {
             _scrolling = true;
-            _startValue = event.y;
+            _startValue = (event.y - _origin.y);
         }
 
         return true;
@@ -106,12 +111,12 @@ bool ScrollBarLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &event, c
 {
     (void)inputState;
 
-    _hoverScroll = event.x > (_width - (scrollBarWidth * 5));
+    _hoverScroll = (event.x - _origin.x) > (_width - (scrollBarWidth * 5));
 
     if (_scrolling)
     {
-        onScrollY(_startValue - event.y);
-        _startValue = event.y;
+        onScrollY(_startValue - (event.y - _origin.y));
+        _startValue = (event.y - _origin.y);
 
         return true;
     }

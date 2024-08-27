@@ -118,11 +118,11 @@ void MenuLayer::render(const struct InputState &inputState)
 
         if (hover)
         {
-            glColor4f(0.4f, 0.4f, 0.4f, 1.0f);
+            glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
         }
         else
         {
-            glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
+            glColor4f(0.4f, 0.4f, 0.4f, 1.0f);
         }
 
         glVertex2f(border.left, border.top);
@@ -154,15 +154,18 @@ void MenuLayer::render(const struct InputState &inputState)
         menuRect.right = menuRect.left + _width;
     }
 
-    glBegin(GL_LINE_LOOP);
+    if (_direction == scr::Direction::Vertical)
+    {
+        glBegin(GL_LINE_LOOP);
 
-    glColor4f(0.1f, 0.1f, 0.1f, 0.9f);
+        glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
 
-    glVertex2f(menuRect.left, menuRect.top);
-    glVertex2f(menuRect.right, menuRect.top);
-    glVertex2f(menuRect.right, menuRect.bottom);
-    glVertex2f(menuRect.left, menuRect.bottom);
-    glEnd();
+        glVertex2f(menuRect.left, menuRect.top);
+        glVertex2f(menuRect.right, menuRect.top);
+        glVertex2f(menuRect.right, menuRect.bottom);
+        glVertex2f(menuRect.left, menuRect.bottom);
+        glEnd();
+    }
 
     if (_openSubMenu != nullptr)
     {
@@ -267,6 +270,11 @@ bool MenuLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, const 
         return true;
     }
 
+    if (event.type == SDL_MOUSEBUTTONUP)
+    {
+        _mouseDownOnMenuItem = false;
+    }
+
     if (event.type == SDL_MOUSEBUTTONDOWN)
     {
         float x = _origin.x;
@@ -278,6 +286,7 @@ bool MenuLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, const 
 
             if (border.Contains(glm::vec2(event.x, event.y)))
             {
+                _mouseDownOnMenuItem = true;
                 if (menuItem.subMenu.empty())
                 {
                     std::cout << "click: " << menuItem.name << std::endl;
@@ -335,48 +344,53 @@ bool MenuLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &event, const 
         {
             return true;
         }
+    }
 
-        float x = _origin.x;
-        float y = _origin.y;
+    if (!_mouseDownOnMenuItem)
+    {
+        return false;
+    }
 
-        for (const auto &menuItem : _menuItems)
+    float x = _origin.x;
+    float y = _origin.y;
+
+    for (const auto &menuItem : _menuItems)
+    {
+        auto border = GetBorderRectangle(menuItem, x, y);
+
+        if (border.Contains(glm::vec2(event.x, event.y)))
         {
-            auto border = GetBorderRectangle(menuItem, x, y);
-
-            if (border.Contains(glm::vec2(event.x, event.y)))
+            if (!menuItem.subMenu.empty() && _subMenuParentName != menuItem.name)
             {
-                if (!menuItem.subMenu.empty() && _subMenuParentName != menuItem.name)
+                _subMenuParentName = menuItem.name;
+
+                _openSubMenu = std::make_unique<MenuLayer>(_font);
+                if (_direction == scr::Direction::Horizontal)
                 {
-                    _subMenuParentName = menuItem.name;
-
-                    _openSubMenu = std::make_unique<MenuLayer>(_font);
-                    if (_direction == scr::Direction::Horizontal)
-                    {
-                        _openSubMenu->init(menuItem.subMenu, glm::vec2(border.left, border.bottom));
-                    }
-                    else
-                    {
-                        _openSubMenu->init(menuItem.subMenu, glm::vec2(border.right, border.top));
-                    }
-                    _openSubMenu->resize(-1, -1, _width, _height);
-                    _openSubMenu->_direction = scr::Direction::Vertical;
+                    _openSubMenu->init(menuItem.subMenu, glm::vec2(border.left, border.bottom));
                 }
-
-                return true;
+                else
+                {
+                    _openSubMenu->init(menuItem.subMenu, glm::vec2(border.right, border.top));
+                }
+                _openSubMenu->resize(-1, -1, _width, _height);
+                _openSubMenu->_direction = scr::Direction::Vertical;
             }
 
-            if (_direction == scr::Direction::Horizontal)
-            {
-                x = border.right;
-            }
-            else if (_direction == scr::Direction::Vertical)
-            {
-                y += menuRowHeight;
-            }
+            return true;
+        }
+
+        if (_direction == scr::Direction::Horizontal)
+        {
+            x = border.right;
+        }
+        else if (_direction == scr::Direction::Vertical)
+        {
+            y += menuRowHeight;
         }
     }
 
-    return false;
+    return _mouseDownOnMenuItem;
 }
 
 bool MenuLayer::handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState)

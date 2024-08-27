@@ -37,7 +37,10 @@ public:
             }
             lexCurrent = lex;
             if (lexCurrent)
+            {
                 instance = lexCurrent->Create();
+            }
+
             pdoc->LexerChanged();
         }
     }
@@ -115,22 +118,20 @@ bool EditorLayer::init(const glm::vec2 &origin)
 {
     _origin = origin;
 
-    _scrollBarLayer = std::make_unique<ScrollBarLayer>();
-    _scrollBarLayer->init(glm::vec2(0.0f, _origin.y));
-    _scrollBarLayer->resize(0, _origin.y, _width, _height);
-    _scrollBarLayer->onScrollY = [&](int diff) {
-        mActiveEditor->Scroll(diff, _height);
+    _scrollBarLayer.init(glm::vec2(_origin.x, _origin.y));
+    _scrollBarLayer.resize(_origin.x, _origin.y, _width, _height);
+    _scrollBarLayer.onScrollY = [&](int diff) {
+        mMainEditor.Scroll(diff, _height);
     };
-    _scrollBarLayer->getScrollInfo = [&](float &start, float &length) {
-        mActiveEditor->GetScrollBar(start, length);
+    _scrollBarLayer.getScrollInfo = [&](float &start, float &length) {
+        mMainEditor.GetScrollBar(start, length);
     };
 
     initialiseShaderEditor();
 
-    mMainEditor.SetSize(_width - _origin.x, _height - _origin.y);
+    mMainEditor.SetSize(_width, _height);
 
-    mActiveEditor = &mMainEditor;
-    mActiveEditor->Command(SCI_SETFOCUS, true);
+    mMainEditor.Command(SCI_SETFOCUS, true);
 
     return true;
 }
@@ -153,7 +154,7 @@ void EditorLayer::render(const struct InputState &inputState)
     mMainEditor.Paint();
     glPopMatrix();
 
-    _scrollBarLayer->render(inputState);
+    _scrollBarLayer.render(inputState);
 }
 
 void EditorLayer::resize(int x, int y, int w, int h)
@@ -163,9 +164,9 @@ void EditorLayer::resize(int x, int y, int w, int h)
     _origin.x = x;
     _origin.y = y;
 
-    mMainEditor.SetSize(_width - _origin.x, _height - _origin.y);
+    mMainEditor.SetSize(_width, _height);
 
-    _scrollBarLayer->resize(_origin.x, _origin.y, w, h);
+    _scrollBarLayer.resize(_origin.x, _origin.y, _width, _height);
 }
 
 int EditorLayer::width()
@@ -180,7 +181,7 @@ int EditorLayer::height()
 
 bool EditorLayer::handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState)
 {
-    if (_scrollBarLayer->handleKeyDown(event, inputState)) return true;
+    if (_scrollBarLayer.handleKeyDown(event, inputState)) return true;
 
     int sciKey;
     switch (event.keysym.sym)
@@ -280,7 +281,7 @@ bool EditorLayer::handleKeyDown(const SDL_KeyboardEvent &event, const struct Inp
     if (sciKey)
     {
         bool consumed;
-        mActiveEditor->KeyDown(
+        mMainEditor.KeyDown(
             (SDLK_a <= sciKey && sciKey <= SDLK_z) ? sciKey - 'a' + 'A' : sciKey,
             inputState.shift,
             inputState.ctrl,
@@ -296,7 +297,7 @@ bool EditorLayer::handleKeyUp(const SDL_KeyboardEvent &event, const struct Input
     (void)event;
     (void)inputState;
 
-    if (_scrollBarLayer->handleKeyUp(event, inputState)) return true;
+    if (_scrollBarLayer.handleKeyUp(event, inputState)) return true;
 
     return false;
 }
@@ -306,9 +307,9 @@ bool EditorLayer::handleTextInput(SDL_TextInputEvent &event, const struct InputS
     (void)event;
     (void)inputState;
 
-    if (_scrollBarLayer->handleTextInput(event, inputState)) return true;
+    if (_scrollBarLayer.handleTextInput(event, inputState)) return true;
 
-    mActiveEditor->AddCharUTF(event.text, strlen(event.text));
+    mMainEditor.AddCharUTF(event.text, strlen(event.text));
 
     return false;
 }
@@ -317,11 +318,16 @@ bool EditorLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, cons
 {
     (void)inputState;
 
-    if (_scrollBarLayer->handleMouseButtonInput(event, inputState)) return true;
+    if (event.x < _origin.x || event.y < _origin.y)
+    {
+        return false;
+    }
+
+    if (_scrollBarLayer.handleMouseButtonInput(event, inputState)) return true;
 
     if (event.state == SDL_PRESSED)
     {
-        mActiveEditor->StartSelectionxy(event.x - _origin.x, event.y - _origin.y);
+        mMainEditor.StartSelectionxy(event.x - _origin.x, event.y - _origin.y);
     }
 
     return false;
@@ -331,11 +337,16 @@ bool EditorLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &event, cons
 {
     (void)inputState;
 
-    if (_scrollBarLayer->handleMouseMotionInput(event, inputState)) return true;
+    if (event.x < _origin.x || event.y < _origin.y)
+    {
+        return false;
+    }
+
+    if (_scrollBarLayer.handleMouseMotionInput(event, inputState)) return true;
 
     if (event.state == SDL_PRESSED)
     {
-        mActiveEditor->ChangeSelectionxy(event.x - _origin.x, event.y - _origin.y);
+        mMainEditor.ChangeSelectionxy(event.x - _origin.x, event.y - _origin.y);
     }
 
     return false;
@@ -343,7 +354,7 @@ bool EditorLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &event, cons
 
 bool EditorLayer::handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState)
 {
-    if (_scrollBarLayer->handleMouseWheel(event, inputState)) return true;
+    if (_scrollBarLayer.handleMouseWheel(event, inputState)) return true;
 
     (void)event;
     (void)inputState;
@@ -366,7 +377,7 @@ bool EditorLayer::handleMouseWheel(const SDL_MouseWheelEvent &event, const struc
     }
     else
     {
-        mActiveEditor->ScrollY(event.y * 4);
+        mMainEditor.ScrollY(event.y * 4);
     }
 
     return false;
@@ -495,15 +506,15 @@ void EditorLayer::initialiseShaderEditor()
     SetAStyle(mMainEditor, STYLE_INDENTGUIDE, 0xFFC0C0C0, 0xFF333333);
     SetAStyle(mMainEditor, STYLE_BRACELIGHT, MakeRGBA(69, 198, 214), 0xFF333333);
     SetAStyle(mMainEditor, STYLE_BRACEBAD, MakeRGBA(69, 198, 214), 0xFF333333);
-    SetAStyle(mMainEditor, STYLE_LINENUMBER, 0xFFC0C0C0, MakeRGBA(64, 66, 68));
+    SetAStyle(mMainEditor, STYLE_LINENUMBER, 0xFFC0C0C0, 0xFF333333);
 
     mMainEditor.Command(SCI_SETFOLDMARGINCOLOUR, 1, 0xFF333333);
-    mMainEditor.Command(SCI_SETFOLDMARGINHICOLOUR, 1, MakeRGBA(64, 66, 68));
+    mMainEditor.Command(SCI_SETFOLDMARGINHICOLOUR, 1,0xFF333333);
     mMainEditor.Command(SCI_SETSELBACK, 1, 0xD0CC9966);
     mMainEditor.Command(SCI_SETCARETFORE, 0xFFFFFFFF, 0);
     mMainEditor.Command(SCI_SETCARETLINEVISIBLE, 1);
     mMainEditor.Command(SCI_SETCARETLINEBACK, 0xFFFFFFFF);
-    mMainEditor.Command(SCI_SETCARETLINEBACKALPHA, 0x20);
+    mMainEditor.Command(SCI_SETCARETLINEBACKALPHA, 0x0);
 
     mMainEditor.Command(SCI_SETMARGINWIDTHN, 0, _fontSize * 4);  // Calculate correct width
     mMainEditor.Command(SCI_SETMARGINWIDTHN, 1, 40);             // Calculate correct width

@@ -19,12 +19,15 @@ target_sources(Demo
         "ShaderEditOverlay.hpp"
         "editorlayer.cpp"
         "editorlayer.hpp"
+        "font-utils.hpp"
         "iscreenlayer.hpp"
         "screen-utils.hpp"
         "scrollbarlayer.cpp"
         "scrollbarlayer.hpp"
         "stb_truetype.h"
         "stbtt_font.hpp"
+        "tabbededitorslayer.cpp"
+        "tabbededitorslayer.hpp"
 )
 
 target_compile_features(Demo

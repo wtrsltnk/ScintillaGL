@@ -3,6 +3,7 @@
 
 #include "editorlayer.hpp"
 #include "menulayer.hpp"
+#include "tabbededitorslayer.hpp"
 
 #include "ShaderEditOverlay.hpp"
 #include <SDL.h>
@@ -54,17 +55,16 @@ void ShaderEditOverlay::initialise(int w, int h)
     _menuLayer = std::make_shared<MenuLayer>(localFont);
     _layers.push_back(_menuLayer);
     _menuLayer->init(wouterMenu, glm::vec2(0.0f));
-    _menuLayer->resize(0, 0, w, h);
 
-    _editorLayer = std::make_shared<EditorLayer>();
-    _layers.push_back(_editorLayer);
-    _editorLayer->init(glm::vec2(0.0f, _menuLayer->height()));
-    _editorLayer->resize(0.0f, _menuLayer->height(), w, h);
+    _tabbedEditorsLayer = std::make_shared<TabbedEditorsLayer>(localFont);
+    _layers.push_back(_tabbedEditorsLayer);
+    _tabbedEditorsLayer->init(glm::vec2(0.0f, _menuLayer->height()));
 
-    _width = w;
-    _height = h;
+    resize(w, h);
 
-    loadFile();
+    _tabbedEditorsLayer->loadFile("C:/Code/small-apps/ScintillaGL/Demo/ShaderEditOverlay.cpp");
+    _tabbedEditorsLayer->loadFile("C:/Code/small-apps/ScintillaGL/Demo/font-utils.hpp");
+    _tabbedEditorsLayer->loadFile("C:/Code/small-apps/ScintillaGL/Demo/screen-utils.hpp");
 }
 
 void ShaderEditOverlay::resize(int w, int h)
@@ -77,7 +77,7 @@ void ShaderEditOverlay::resize(int w, int h)
     {
         if (auto layer = layerPtr.lock())
         {
-            layer->resize(0, y, w, h);
+            layer->resize(0, y, w, h - y);
             y += layer->height();
         }
     }
@@ -111,16 +111,6 @@ void ShaderEditOverlay::renderFullscreen()
     }
 }
 
-void ShaderEditOverlay::loadFile()
-{
-    std::stringstream buffer;
-
-    std::ifstream t("C:/Code/small-apps/ScintillaGL/Demo/ShaderEditOverlay.cpp");
-    buffer << t.rdbuf();
-
-    _editorLayer->loadContent(buffer.str());
-}
-
 void ShaderEditOverlay::handleKeyDown(
     const SDL_KeyboardEvent &event)
 {
@@ -152,13 +142,12 @@ void ShaderEditOverlay::handleKeyUp(
 void ShaderEditOverlay::handleTextInput(
     SDL_TextInputEvent &event)
 {
-    if (_editorLayer->handleTextInput(event, _inputState)) return;
+    if (_tabbedEditorsLayer->handleTextInput(event, _inputState)) return;
 }
 
 void ShaderEditOverlay::handleMouseButtonInput(
     const SDL_MouseButtonEvent &event)
 {
-
     for (auto &layerPtr : _layers)
     {
         if (auto layer = layerPtr.lock())
