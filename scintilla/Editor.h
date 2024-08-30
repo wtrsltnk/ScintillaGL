@@ -520,7 +520,7 @@ public:
 	Editor();
 	virtual ~Editor();
 
-	void SetSize(float width, float height)	{clientRect = PRectangle(0, 0, width, height);}
+    void SetSize(float width, float height)	{clientRect = PRectangle(0, 0, width, height);}
 	
 	//temporary to work with lexers
 	Document* GetDocument() {return pdoc;}

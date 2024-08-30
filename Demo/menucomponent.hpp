@@ -2,17 +2,17 @@
 #define MENULAYER_HPP
 
 #include "Platform.h"
-#include "iscreenlayer.hpp"
+#include "icomponent.hpp"
 #include "localmenuitem.hpp"
 #include "screen-utils.hpp"
 #include <memory>
 #include <vector>
 
-class MenuLayer : public IScreenLayer
+class MenuComponent : public IComponent
 {
 public:
-    MenuLayer(std::unique_ptr<Font> &font);
-    virtual ~MenuLayer() = default;
+    MenuComponent(std::unique_ptr<Font> &font);
+    virtual ~MenuComponent() = default;
 
     bool init(const std::vector<LocalMenuItem> &menuItems, const glm::vec2 &origin);
 
@@ -24,7 +24,7 @@ public:
 
     virtual bool handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState);
     virtual bool handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState &inputState);
-    virtual bool handleTextInput(SDL_TextInputEvent &event, const struct InputState &inputState);
+    virtual bool handleTextInput(const SDL_TextInputEvent &event, const struct InputState &inputState);
     virtual bool handleMouseButtonInput(const SDL_MouseButtonEvent &event, const struct InputState &inputState);
     virtual bool handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState);
     virtual bool handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState);
@@ -34,7 +34,7 @@ private:
     int _width = 0.0f;
     int _height = 0.0f;
     glm::vec2 _origin;
-    std::unique_ptr<MenuLayer> _openSubMenu;
+    std::unique_ptr<MenuComponent> _openSubMenu;
     std::string _subMenuParentName;
     bool _mouseDownOnMenuItem = false;
 

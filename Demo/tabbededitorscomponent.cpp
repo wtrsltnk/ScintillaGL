@@ -1,5 +1,5 @@
 
-#include "tabbededitorslayer.hpp"
+#include "tabbededitorscomponent.hpp"
 
 #include "font-utils.hpp"
 #include <filesystem>
@@ -9,12 +9,12 @@
 
 const int tabBarHeight = 45;
 
-TabbedEditorsLayer::TabbedEditorsLayer(std::unique_ptr<Font> &font)
+TabbedEditorsComponent::TabbedEditorsComponent(std::unique_ptr<Font> &font)
     : _font(font)
 {
 }
 
-bool TabbedEditorsLayer::init(const glm::vec2 &origin)
+bool TabbedEditorsComponent::init(const glm::vec2 &origin)
 {
     _origin = origin;
 
@@ -27,14 +27,14 @@ bool TabbedEditorsLayer::init(const glm::vec2 &origin)
     return true;
 }
 
-void TabbedEditorsLayer::loadFile(const std::string &fileName)
+void TabbedEditorsComponent::loadFile(const std::string &fileName)
 {
     std::stringstream buffer;
 
     std::ifstream t(fileName.c_str());
     buffer << t.rdbuf();
 
-    auto editorLayer = std::make_unique<EditorLayer>();
+    auto editorLayer = std::make_unique<EditorComponent>();
     editorLayer->init(glm::vec2(_origin.x, _origin.y + tabBarHeight));
     editorLayer->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
 
@@ -43,8 +43,10 @@ void TabbedEditorsLayer::loadFile(const std::string &fileName)
     _tabs.push_back(std::move(editorLayer));
 }
 
-void TabbedEditorsLayer::render(const struct InputState &inputState)
+void TabbedEditorsComponent::render(const struct InputState &inputState)
 {
+    const float border = 4.0f;
+
     (void)inputState;
 
     float x = _origin.x;
@@ -53,8 +55,6 @@ void TabbedEditorsLayer::render(const struct InputState &inputState)
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    const float border = 8.0f;
 
     glBegin(GL_QUADS);
     glColor4f(0.4f, 0.4f, 0.4f, 1.0f);
@@ -82,6 +82,13 @@ void TabbedEditorsLayer::render(const struct InputState &inputState)
         auto border = GetBorderRectangle(tab, x, y);
 
         bool hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
+
+        if (inputState.mouseX < _origin.x || inputState.mouseX > _origin.x + _width
+            || inputState.mouseY < _origin.y || inputState.mouseY > _origin.y + _height)
+        {
+            hover = false;
+        }
+
         bool isActiveTab = _tabs[_activeTab] == tab;
 
         if (isActiveTab)
@@ -91,7 +98,7 @@ void TabbedEditorsLayer::render(const struct InputState &inputState)
 
         glBegin(GL_QUADS);
         glColor4f(0.2f, 0.2f, 0.2f, isActiveTab ? 1.0f : hover ? 0.6f
-                                                                               : 0.4f);
+                                                               : 0.4f);
         glVertex2f(border.left, border.top);
         glVertex2f(border.right, border.top);
         glVertex2f(border.right, border.bottom);
@@ -127,7 +134,7 @@ void TabbedEditorsLayer::render(const struct InputState &inputState)
     }
 }
 
-void TabbedEditorsLayer::resize(int x, int y, int w, int h)
+void TabbedEditorsComponent::resize(int x, int y, int w, int h)
 {
     _width = w;
     _height = h;
@@ -156,17 +163,19 @@ void TabbedEditorsLayer::resize(int x, int y, int w, int h)
     }
 }
 
-int TabbedEditorsLayer::width()
+int TabbedEditorsComponent::width()
 {
     return _width;
 }
 
-int TabbedEditorsLayer::height()
+int TabbedEditorsComponent::height()
 {
     return _height;
 }
 
-bool TabbedEditorsLayer::handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState)
+bool TabbedEditorsComponent::handleKeyDown(
+    const SDL_KeyboardEvent &event,
+    const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;
@@ -179,7 +188,9 @@ bool TabbedEditorsLayer::handleKeyDown(const SDL_KeyboardEvent &event, const str
     return false;
 }
 
-bool TabbedEditorsLayer::handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState &inputState)
+bool TabbedEditorsComponent::handleKeyUp(
+    const SDL_KeyboardEvent &event,
+    const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;
@@ -192,7 +203,9 @@ bool TabbedEditorsLayer::handleKeyUp(const SDL_KeyboardEvent &event, const struc
     return false;
 }
 
-bool TabbedEditorsLayer::handleTextInput(SDL_TextInputEvent &event, const struct InputState &inputState)
+bool TabbedEditorsComponent::handleTextInput(
+    const SDL_TextInputEvent &event,
+    const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;
@@ -205,10 +218,18 @@ bool TabbedEditorsLayer::handleTextInput(SDL_TextInputEvent &event, const struct
     return false;
 }
 
-bool TabbedEditorsLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, const struct InputState &inputState)
+bool TabbedEditorsComponent::handleMouseButtonInput(
+    const SDL_MouseButtonEvent &event,
+    const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;
+
+    if (event.x < _origin.x || event.x > _origin.x + _width
+        || event.y < _origin.y || event.y > _origin.y + _height)
+    {
+        return false;
+    }
 
     if (event.type == SDL_MOUSEBUTTONDOWN)
     {
@@ -224,6 +245,9 @@ bool TabbedEditorsLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &even
                 if (event.button == SDL_BUTTON_LEFT)
                 {
                     _activeTab = i;
+
+                    _draggingTab = true;
+                    _draggingStartX = event.x;
 
                     return true;
                 }
@@ -243,6 +267,11 @@ bool TabbedEditorsLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &even
         }
     }
 
+    if (event.type == SDL_MOUSEBUTTONUP)
+    {
+        _draggingTab = false;
+    }
+
     if (!_tabs.empty() && _tabs.size() > _activeTab)
     {
         return _tabs[_activeTab]->handleMouseButtonInput(event, inputState);
@@ -251,10 +280,23 @@ bool TabbedEditorsLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &even
     return false;
 }
 
-bool TabbedEditorsLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState)
+bool TabbedEditorsComponent::handleMouseMotionInput(
+    const SDL_MouseMotionEvent &event,
+    const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;
+
+    if (inputState.leftMouseDown && _draggingTab)
+    {
+        return true;
+    }
+
+    if (event.x < _origin.x || event.x > _origin.x + _width
+        || event.y < _origin.y || event.y > _origin.y + _height)
+    {
+        return false;
+    }
 
     if (!_tabs.empty() && _tabs.size() > _activeTab)
     {
@@ -264,7 +306,9 @@ bool TabbedEditorsLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &even
     return false;
 }
 
-bool TabbedEditorsLayer::handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState)
+bool TabbedEditorsComponent::handleMouseWheel(
+    const SDL_MouseWheelEvent &event,
+    const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;
@@ -277,8 +321,8 @@ bool TabbedEditorsLayer::handleMouseWheel(const SDL_MouseWheelEvent &event, cons
     return false;
 }
 
-scr::Rectangle TabbedEditorsLayer::GetBorderRectangle(
-    const std::unique_ptr<EditorLayer> &tab,
+scr::Rectangle TabbedEditorsComponent::GetBorderRectangle(
+    const std::unique_ptr<EditorComponent> &tab,
     float &x,
     float &y)
 {

@@ -1,14 +1,8 @@
 #include <glad/glad.h>
 #include <windows.h>
 
-#include "editorlayer.hpp"
-#include "menulayer.hpp"
-#include "tabbededitorslayer.hpp"
-
 #include "ShaderEditOverlay.hpp"
 #include <SDL.h>
-#include <fstream>
-#include <sstream>
 
 #include "Platform.h"
 
@@ -52,19 +46,24 @@ void ShaderEditOverlay::initialise(int w, int h)
     localFont = std::make_unique<Font>();
     localFont->Create(fp);
 
-    _menuLayer = std::make_shared<MenuLayer>(localFont);
-    _layers.push_back(_menuLayer);
-    _menuLayer->init(wouterMenu, glm::vec2(0.0f));
+    _menu = std::make_shared<MenuComponent>(localFont);
+    _components.push_back(_menu);
+    _menu->init(wouterMenu, glm::vec2(0.0f));
 
-    _tabbedEditorsLayer = std::make_shared<TabbedEditorsLayer>(localFont);
-    _layers.push_back(_tabbedEditorsLayer);
-    _tabbedEditorsLayer->init(glm::vec2(0.0f, _menuLayer->height()));
+    _editors = std::make_shared<SplitterComponent>(localFont);
+    _components.push_back(_editors);
+    _editors->init(glm::vec2(0.0f, _menu->height()), 0.4f, true);
 
     resize(w, h);
 
-    _tabbedEditorsLayer->loadFile("C:/Code/small-apps/ScintillaGL/Demo/ShaderEditOverlay.cpp");
-    _tabbedEditorsLayer->loadFile("C:/Code/small-apps/ScintillaGL/Demo/font-utils.hpp");
-    _tabbedEditorsLayer->loadFile("C:/Code/small-apps/ScintillaGL/Demo/screen-utils.hpp");
+    auto &editor = _editors->ActiveEditor();
+
+    if (editor != nullptr)
+    {
+        editor->loadFile("C:/Code/small-apps/ScintillaGL/Demo/ShaderEditOverlay.cpp");
+        editor->loadFile("C:/Code/small-apps/ScintillaGL/Demo/font-utils.hpp");
+        editor->loadFile("C:/Code/small-apps/ScintillaGL/Demo/screen-utils.hpp");
+    }
 }
 
 void ShaderEditOverlay::resize(int w, int h)
@@ -73,12 +72,12 @@ void ShaderEditOverlay::resize(int w, int h)
     _height = h;
 
     int y = 0;
-    for (auto &layerPtr : _layers)
+    for (auto &componentPtr : _components)
     {
-        if (auto layer = layerPtr.lock())
+        if (auto component = componentPtr.lock())
         {
-            layer->resize(0, y, w, h - y);
-            y += layer->height();
+            component->resize(0, y, w, h - y);
+            y += component->height();
         }
     }
 }
@@ -96,14 +95,14 @@ void ShaderEditOverlay::renderFullscreen()
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    for (auto layerPtr = _layers.rbegin(); layerPtr != _layers.rend(); ++layerPtr)
+    for (auto componentPtr = _components.rbegin(); componentPtr != _components.rend(); ++componentPtr)
     {
-        if (auto layer = layerPtr->lock())
+        if (auto component = componentPtr->lock())
         {
             glPushMatrix();
             glPushAttrib(GL_ALL_ATTRIB_BITS);
             {
-                layer->render(_inputState);
+                component->render(_inputState);
             }
             glPopAttrib();
             glPopMatrix();
@@ -116,11 +115,11 @@ void ShaderEditOverlay::handleKeyDown(
 {
     UpdateMods(event);
 
-    for (auto &layerPtr : _layers)
+    for (auto &componentPtr : _components)
     {
-        if (auto layer = layerPtr.lock())
+        if (auto component = componentPtr.lock())
         {
-            if (layer->handleKeyDown(event, _inputState)) return;
+            if (component->handleKeyDown(event, _inputState)) return;
         }
     }
 }
@@ -130,11 +129,11 @@ void ShaderEditOverlay::handleKeyUp(
 {
     UpdateMods(event);
 
-    for (auto &layerPtr : _layers)
+    for (auto &componentPtr : _components)
     {
-        if (auto layer = layerPtr.lock())
+        if (auto component = componentPtr.lock())
         {
-            if (layer->handleKeyDown(event, _inputState)) return;
+            if (component->handleKeyDown(event, _inputState)) return;
         }
     }
 }
@@ -142,17 +141,37 @@ void ShaderEditOverlay::handleKeyUp(
 void ShaderEditOverlay::handleTextInput(
     SDL_TextInputEvent &event)
 {
-    if (_tabbedEditorsLayer->handleTextInput(event, _inputState)) return;
+    auto &editor = _editors->ActiveEditor();
+
+    if (editor != nullptr)
+    {
+        editor->handleTextInput(event, _inputState);
+    }
 }
 
 void ShaderEditOverlay::handleMouseButtonInput(
     const SDL_MouseButtonEvent &event)
 {
-    for (auto &layerPtr : _layers)
+    if (event.button == SDL_BUTTON_LEFT)
     {
-        if (auto layer = layerPtr.lock())
+        _inputState.leftMouseDown = event.type == SDL_MOUSEBUTTONDOWN;
+    }
+
+    if (event.button == SDL_BUTTON_MIDDLE)
+    {
+        _inputState.middleMouseDown = event.type == SDL_MOUSEBUTTONDOWN;
+    }
+
+    if (event.button == SDL_BUTTON_RIGHT)
+    {
+        _inputState.rightMouseDown = event.type == SDL_MOUSEBUTTONDOWN;
+    }
+
+    for (auto &componentPtr : _components)
+    {
+        if (auto component = componentPtr.lock())
         {
-            if (layer->handleMouseButtonInput(event, _inputState)) return;
+            if (component->handleMouseButtonInput(event, _inputState)) return;
         }
     }
 }
@@ -163,11 +182,11 @@ void ShaderEditOverlay::handleMouseMotionInput(
     _inputState.mouseX = event.x;
     _inputState.mouseY = event.y;
 
-    for (auto &layerPtr : _layers)
+    for (auto &componentPtr : _components)
     {
-        if (auto layer = layerPtr.lock())
+        if (auto component = componentPtr.lock())
         {
-            if (layer->handleMouseMotionInput(event, _inputState)) return;
+            if (component->handleMouseMotionInput(event, _inputState)) return;
         }
     }
 }
@@ -175,12 +194,11 @@ void ShaderEditOverlay::handleMouseMotionInput(
 void ShaderEditOverlay::handleMouseWheel(
     const SDL_MouseWheelEvent &event)
 {
-
-    for (auto &layerPtr : _layers)
+    for (auto &componentPtr : _components)
     {
-        if (auto layer = layerPtr.lock())
+        if (auto component = componentPtr.lock())
         {
-            if (layer->handleMouseWheel(event, _inputState)) return;
+            if (component->handleMouseWheel(event, _inputState)) return;
         }
     }
 }

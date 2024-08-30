@@ -1,5 +1,5 @@
 
-#include "menulayer.hpp"
+#include "menucomponent.hpp"
 
 #include "stbtt_font.hpp"
 #include <glad/glad.h>
@@ -66,9 +66,9 @@ float WidthText(
     return position;
 }
 
-MenuLayer::MenuLayer(std::unique_ptr<Font> &font) : _font(font) {}
+MenuComponent::MenuComponent(std::unique_ptr<Font> &font) : _font(font) {}
 
-bool MenuLayer::init(const std::vector<LocalMenuItem> &menuItems, const glm::vec2 &origin)
+bool MenuComponent::init(const std::vector<LocalMenuItem> &menuItems, const glm::vec2 &origin)
 {
     _menuItems = menuItems;
     _origin = origin;
@@ -82,7 +82,7 @@ bool MenuLayer::init(const std::vector<LocalMenuItem> &menuItems, const glm::vec
     return true;
 }
 
-void MenuLayer::render(const struct InputState &inputState)
+void MenuComponent::render(const struct InputState &inputState)
 {
     float x = _origin.x;
     float y = _origin.y;
@@ -173,7 +173,7 @@ void MenuLayer::render(const struct InputState &inputState)
     }
 }
 
-void MenuLayer::resize(int x, int y, int w, int h)
+void MenuComponent::resize(int x, int y, int w, int h)
 {
     _width = w;
     _height = h;
@@ -223,17 +223,19 @@ void MenuLayer::resize(int x, int y, int w, int h)
     }
 }
 
-int MenuLayer::width()
+int MenuComponent::width()
 {
     return _width;
 }
 
-int MenuLayer::height()
+int MenuComponent::height()
 {
     return menuHeight;
 }
 
-bool MenuLayer::handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState)
+bool MenuComponent::handleKeyDown(
+    const SDL_KeyboardEvent &event,
+    const struct InputState &inputState)
 {
     if (_openSubMenu != nullptr)
     {
@@ -243,7 +245,9 @@ bool MenuLayer::handleKeyDown(const SDL_KeyboardEvent &event, const struct Input
     return false;
 }
 
-bool MenuLayer::handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState &inputState)
+bool MenuComponent::handleKeyUp(
+    const SDL_KeyboardEvent &event,
+    const struct InputState &inputState)
 {
     if (_openSubMenu != nullptr)
     {
@@ -253,7 +257,9 @@ bool MenuLayer::handleKeyUp(const SDL_KeyboardEvent &event, const struct InputSt
     return false;
 }
 
-bool MenuLayer::handleTextInput(SDL_TextInputEvent &event, const struct InputState &inputState)
+bool MenuComponent::handleTextInput(
+    const SDL_TextInputEvent &event,
+    const struct InputState &inputState)
 {
     if (_openSubMenu != nullptr)
     {
@@ -263,7 +269,9 @@ bool MenuLayer::handleTextInput(SDL_TextInputEvent &event, const struct InputSta
     return false;
 }
 
-bool MenuLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, const struct InputState &inputState)
+bool MenuComponent::handleMouseButtonInput(
+    const SDL_MouseButtonEvent &event,
+    const struct InputState &inputState)
 {
     if (_openSubMenu != nullptr && _openSubMenu->handleMouseButtonInput(event, inputState))
     {
@@ -303,7 +311,7 @@ bool MenuLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, const 
                 {
                     _subMenuParentName = menuItem.name;
 
-                    _openSubMenu = std::make_unique<MenuLayer>(_font);
+                    _openSubMenu = std::make_unique<MenuComponent>(_font);
                     if (_direction == scr::Direction::Horizontal)
                     {
                         _openSubMenu->init(menuItem.subMenu, glm::vec2(border.left, border.bottom));
@@ -336,7 +344,9 @@ bool MenuLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, const 
     return false;
 }
 
-bool MenuLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState)
+bool MenuComponent::handleMouseMotionInput(
+    const SDL_MouseMotionEvent &event,
+    const struct InputState &inputState)
 {
     if (_openSubMenu != nullptr)
     {
@@ -364,7 +374,7 @@ bool MenuLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &event, const 
             {
                 _subMenuParentName = menuItem.name;
 
-                _openSubMenu = std::make_unique<MenuLayer>(_font);
+                _openSubMenu = std::make_unique<MenuComponent>(_font);
                 if (_direction == scr::Direction::Horizontal)
                 {
                     _openSubMenu->init(menuItem.subMenu, glm::vec2(border.left, border.bottom));
@@ -393,7 +403,9 @@ bool MenuLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &event, const 
     return _mouseDownOnMenuItem;
 }
 
-bool MenuLayer::handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState)
+bool MenuComponent::handleMouseWheel(
+    const SDL_MouseWheelEvent &event,
+    const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;
@@ -401,7 +413,7 @@ bool MenuLayer::handleMouseWheel(const SDL_MouseWheelEvent &event, const struct 
     return false;
 }
 
-scr::Rectangle MenuLayer::GetBorderRectangle(
+scr::Rectangle MenuComponent::GetBorderRectangle(
     const LocalMenuItem &menuItem,
     float &x,
     float &y)

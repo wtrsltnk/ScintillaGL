@@ -1,16 +1,17 @@
-#ifndef SCROLLBARLAYER_HPP
-#define SCROLLBARLAYER_HPP
+#ifndef SPLITTERCOMPONENT_HPP
+#define SPLITTERCOMPONENT_HPP
 
-#include "iscreenlayer.hpp"
-#include <functional>
+#include "tabbededitorscomponent.hpp"
+#include "icomponent.hpp"
 #include <glm/glm.hpp>
+#include <memory>
 
-class ScrollBarLayer : public IScreenLayer
+class SplitterComponent : public IComponent
 {
 public:
-    virtual ~ScrollBarLayer() = default;
+    SplitterComponent(std::unique_ptr<Font> &font);
 
-    bool init(const glm::vec2 &origin);
+    bool init(const glm::vec2 &origin, float splitAt = 0.0f, bool vertical = false);
 
     virtual void render(const struct InputState &inputState);
     virtual void resize(int x, int y, int w, int h);
@@ -20,23 +21,22 @@ public:
 
     virtual bool handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState);
     virtual bool handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState &inputState);
-    virtual bool handleTextInput(SDL_TextInputEvent &event, const struct InputState &inputState);
+    virtual bool handleTextInput(const SDL_TextInputEvent &event, const struct InputState &inputState);
     virtual bool handleMouseButtonInput(const SDL_MouseButtonEvent &event, const struct InputState &inputState);
     virtual bool handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState);
     virtual bool handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState);
 
-    std::function<void(int)> onScrollY;
-    std::function<void(float &,float &)> getScrollInfo;
-
+    std::unique_ptr<TabbedEditorsComponent>& ActiveEditor();
 private:
+    std::unique_ptr<Font> &_font;
     int _width = 0.0f;
     int _height = 0.0f;
     glm::vec2 _origin;
-
-    int scrollBarWidth = 15;
-    bool _scrolling = false;
-    bool _hoverScroll = false;
-    int _startValue = 0;
+    std::unique_ptr<TabbedEditorsComponent> _editor;
+    std::unique_ptr<SplitterComponent> _panel1;
+    std::unique_ptr<SplitterComponent> _panel2;
+    float _splitAt = 0.5f;
+    bool _verticalSplitting = false;
 };
 
-#endif // SCROLLBARLAYER_HPP
+#endif // SPLITTERCOMPONENT_HPP

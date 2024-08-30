@@ -1,6 +1,14 @@
 
 #include "EditorEx.hpp"
 
+void EditorEx::Resize(int x, int y, int w, int h)
+{//clientRect = PRectangle(x, y, w, h);
+    SetSize(w, h);
+    ContainerNeedsUpdate(SC_UPDATE_H_SCROLL);
+    InvalidateStyleRedraw();
+    ReconfigureScrollBars();
+}
+
 void EditorEx::DebugPrint()
 {
     std::cout << posTopLine << std::endl;
@@ -12,11 +20,6 @@ void EditorEx::GetScrollBar(float &start, float &length)
 {
     start = topLine / static_cast<float>(pdoc->LinesTotal());
     length = LinesOnScreen() / static_cast<float>(pdoc->LinesTotal());
-}
-
-void EditorEx::StartScroll(int value)
-{
-    startValue = value;
 }
 
 void EditorEx::Scroll(int diff, int height)

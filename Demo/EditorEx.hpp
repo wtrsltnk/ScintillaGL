@@ -1,9 +1,9 @@
 #ifndef EDITOREX_HPP
 #define EDITOREX_HPP
 
+#include <iostream>
 #include <map>
 #include <vector>
-#include <iostream>
 
 #include "Platform.h"
 
@@ -58,15 +58,13 @@
 class EditorEx : public Editor
 {
 public:
+    void Resize(int x, int y, int w, int h);
+
     void DebugPrint();
 
     void GetScrollBar(
         float &start,
         float &length);
-
-    int startValue = 0;
-    void StartScroll(
-        int value);
 
     void Scroll(
         int value,

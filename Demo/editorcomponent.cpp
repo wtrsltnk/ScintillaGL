@@ -1,5 +1,5 @@
 
-#include "editorlayer.hpp"
+#include "editorcomponent.hpp"
 
 #include <glad/glad.h>
 
@@ -96,13 +96,13 @@ public:
     }
 };
 
-EditorLayer::EditorLayer()
+EditorComponent::EditorComponent()
 {
     mLexer = std::make_unique<LexState>(mMainEditor.GetDocument());
     mMainEditor.SetLexer(mLexer.get());
 }
 
-void EditorLayer::loadContent(const std::string &content)
+void EditorComponent::loadContent(const std::string &content)
 {
     mMainEditor.Command(SCI_CANCEL);
     mMainEditor.Command(SCI_CLEARALL);
@@ -114,7 +114,7 @@ void EditorLayer::loadContent(const std::string &content)
     mMainEditor.Command(SCI_GOTOPOS, 0);
 }
 
-bool EditorLayer::init(const glm::vec2 &origin)
+bool EditorComponent::init(const glm::vec2 &origin)
 {
     _origin = origin;
 
@@ -136,17 +136,12 @@ bool EditorLayer::init(const glm::vec2 &origin)
     return true;
 }
 
-void EditorLayer::render(const struct InputState &inputState)
+void EditorComponent::render(const struct InputState &inputState)
 {
     (void)inputState;
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glEnable(GL_CLIP_PLANE0);
-    glEnable(GL_CLIP_PLANE1);
-    glEnable(GL_CLIP_PLANE2);
-    glEnable(GL_CLIP_PLANE3);
 
     glPushMatrix();
     glTranslatef(_origin.x, _origin.y, 0);
@@ -157,29 +152,29 @@ void EditorLayer::render(const struct InputState &inputState)
     _scrollBarLayer.render(inputState);
 }
 
-void EditorLayer::resize(int x, int y, int w, int h)
+void EditorComponent::resize(int x, int y, int w, int h)
 {
     _width = w;
     _height = h;
     _origin.x = x;
     _origin.y = y;
 
-    mMainEditor.SetSize(_width, _height);
+    mMainEditor.Resize(_origin.x, _origin.y, _width, _height);
 
     _scrollBarLayer.resize(_origin.x, _origin.y, _width, _height);
 }
 
-int EditorLayer::width()
+int EditorComponent::width()
 {
     return _width;
 }
 
-int EditorLayer::height()
+int EditorComponent::height()
 {
     return _height;
 }
 
-bool EditorLayer::handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState)
+bool EditorComponent::handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState)
 {
     if (_scrollBarLayer.handleKeyDown(event, inputState)) return true;
 
@@ -292,7 +287,7 @@ bool EditorLayer::handleKeyDown(const SDL_KeyboardEvent &event, const struct Inp
     return false;
 }
 
-bool EditorLayer::handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState &inputState)
+bool EditorComponent::handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;
@@ -302,19 +297,26 @@ bool EditorLayer::handleKeyUp(const SDL_KeyboardEvent &event, const struct Input
     return false;
 }
 
-bool EditorLayer::handleTextInput(SDL_TextInputEvent &event, const struct InputState &inputState)
+bool EditorComponent::handleTextInput(
+    const SDL_TextInputEvent &event,
+    const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;
 
     if (_scrollBarLayer.handleTextInput(event, inputState)) return true;
 
-    mMainEditor.AddCharUTF(event.text, strlen(event.text));
+    char buffer[SDL_TEXTINPUTEVENT_TEXT_SIZE] = {0};
+    strcpy_s(buffer, SDL_TEXTINPUTEVENT_TEXT_SIZE, event.text);
+
+    mMainEditor.AddCharUTF(buffer, strlen(buffer));
 
     return false;
 }
 
-bool EditorLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, const struct InputState &inputState)
+bool EditorComponent::handleMouseButtonInput(
+    const SDL_MouseButtonEvent &event,
+    const struct InputState &inputState)
 {
     (void)inputState;
 
@@ -333,7 +335,9 @@ bool EditorLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, cons
     return false;
 }
 
-bool EditorLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState)
+bool EditorComponent::handleMouseMotionInput(
+    const SDL_MouseMotionEvent &event,
+    const struct InputState &inputState)
 {
     (void)inputState;
 
@@ -352,7 +356,9 @@ bool EditorLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &event, cons
     return false;
 }
 
-bool EditorLayer::handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState)
+bool EditorComponent::handleMouseWheel(
+    const SDL_MouseWheelEvent &event,
+    const struct InputState &inputState)
 {
     if (_scrollBarLayer.handleMouseWheel(event, inputState)) return true;
 
@@ -491,7 +497,7 @@ const int markersArray[][NB_FOLDER_STATE] = {
 
 const char *fontName = "C:\\Windows\\Fonts\\consola.ttf";
 
-void EditorLayer::initialiseShaderEditor()
+void EditorComponent::initialiseShaderEditor()
 {
     mLexer->SetLexer(SCLEX_CPP);
     mLexer->SetWordList(0, cppKeyword);
@@ -508,8 +514,10 @@ void EditorLayer::initialiseShaderEditor()
     SetAStyle(mMainEditor, STYLE_BRACEBAD, MakeRGBA(69, 198, 214), 0xFF333333);
     SetAStyle(mMainEditor, STYLE_LINENUMBER, 0xFFC0C0C0, 0xFF333333);
 
+    mMainEditor.Command(SCI_SETWRAPMODE, SC_WRAP_WORD);
+
     mMainEditor.Command(SCI_SETFOLDMARGINCOLOUR, 1, 0xFF333333);
-    mMainEditor.Command(SCI_SETFOLDMARGINHICOLOUR, 1,0xFF333333);
+    mMainEditor.Command(SCI_SETFOLDMARGINHICOLOUR, 1, 0xFF333333);
     mMainEditor.Command(SCI_SETSELBACK, 1, 0xD0CC9966);
     mMainEditor.Command(SCI_SETCARETFORE, 0xFFFFFFFF, 0);
     mMainEditor.Command(SCI_SETCARETLINEVISIBLE, 1);

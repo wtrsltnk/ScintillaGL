@@ -1,17 +1,14 @@
-#ifndef EDITORLAYER_HPP
-#define EDITORLAYER_HPP
+#ifndef SCROLLBARLAYER_HPP
+#define SCROLLBARLAYER_HPP
 
 #include "icomponent.hpp"
-#include "scrollbarcomponent.hpp"
+#include <functional>
 #include <glm/glm.hpp>
 
-#include "EditorEx.hpp"
-
-class EditorComponent : public IComponent
+class ScrollBarComponent : public IComponent
 {
 public:
-    EditorComponent();
-    virtual ~EditorComponent() = default;
+    virtual ~ScrollBarComponent() = default;
 
     bool init(const glm::vec2 &origin);
 
@@ -23,29 +20,23 @@ public:
 
     virtual bool handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState);
     virtual bool handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState &inputState);
-    virtual bool handleTextInput(SDL_TextInputEvent &event, const struct InputState &inputState);
+    virtual bool handleTextInput(const SDL_TextInputEvent &event, const struct InputState &inputState);
     virtual bool handleMouseButtonInput(const SDL_MouseButtonEvent &event, const struct InputState &inputState);
     virtual bool handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState);
     virtual bool handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState);
 
-    void loadContent(const std::string &content);
+    std::function<void(int)> onScrollY;
+    std::function<void(float &,float &)> getScrollInfo;
 
-    std::string title;
 private:
     int _width = 0.0f;
     int _height = 0.0f;
     glm::vec2 _origin;
 
-    ScrollBarComponent _scrollBarLayer;
-    EditorEx mMainEditor;
-
-    int _fontSize = 20;
-
-    std::unique_ptr<class LexState> mLexer;
-
-    void initialiseShaderEditor();
+    int scrollBarWidth = 15;
+    bool _scrolling = false;
+    bool _hoverScroll = false;
+    int _startValue = 0;
 };
 
-
-
-#endif // EDITORLAYER_HPP
+#endif // SCROLLBARLAYER_HPP

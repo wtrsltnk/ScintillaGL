@@ -1,17 +1,18 @@
 
-#include "scrollbarlayer.hpp"
+#include "scrollbarcomponent.hpp"
 
 #include <glad/glad.h>
-#include <iostream>
 
-bool ScrollBarLayer::init(const glm::vec2 &origin)
+bool ScrollBarComponent::init(
+    const glm::vec2 &origin)
 {
     _origin = origin;
 
     return true;
 }
 
-void ScrollBarLayer::render(const struct InputState &inputState)
+void ScrollBarComponent::render(
+    const struct InputState &inputState)
 {
     (void)inputState;
 
@@ -45,7 +46,7 @@ void ScrollBarLayer::render(const struct InputState &inputState)
     glEnd();
 }
 
-void ScrollBarLayer::resize(int x, int y, int w, int h)
+void ScrollBarComponent::resize(int x, int y, int w, int h)
 {
     _width = w;
     _height = h;
@@ -53,17 +54,19 @@ void ScrollBarLayer::resize(int x, int y, int w, int h)
     _origin.y = y;
 }
 
-int ScrollBarLayer::width()
+int ScrollBarComponent::width()
 {
     return _width;
 }
 
-int ScrollBarLayer::height()
+int ScrollBarComponent::height()
 {
     return _height;
 }
 
-bool ScrollBarLayer::handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState)
+bool ScrollBarComponent::handleKeyDown(
+    const SDL_KeyboardEvent &event,
+    const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;
@@ -71,7 +74,9 @@ bool ScrollBarLayer::handleKeyDown(const SDL_KeyboardEvent &event, const struct 
     return false;
 }
 
-bool ScrollBarLayer::handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState &inputState)
+bool ScrollBarComponent::handleKeyUp(
+    const SDL_KeyboardEvent &event,
+    const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;
@@ -79,7 +84,9 @@ bool ScrollBarLayer::handleKeyUp(const SDL_KeyboardEvent &event, const struct In
     return false;
 }
 
-bool ScrollBarLayer::handleTextInput(SDL_TextInputEvent &event, const struct InputState &inputState)
+bool ScrollBarComponent::handleTextInput(
+    const SDL_TextInputEvent &event,
+    const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;
@@ -87,7 +94,9 @@ bool ScrollBarLayer::handleTextInput(SDL_TextInputEvent &event, const struct Inp
     return false;
 }
 
-bool ScrollBarLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, const struct InputState &inputState)
+bool ScrollBarComponent::handleMouseButtonInput(
+    const SDL_MouseButtonEvent &event,
+    const struct InputState &inputState)
 {
     (void)inputState;
 
@@ -107,7 +116,9 @@ bool ScrollBarLayer::handleMouseButtonInput(const SDL_MouseButtonEvent &event, c
     return false;
 }
 
-bool ScrollBarLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState)
+bool ScrollBarComponent::handleMouseMotionInput(
+    const SDL_MouseMotionEvent &event,
+    const struct InputState &inputState)
 {
     (void)inputState;
 
@@ -124,7 +135,9 @@ bool ScrollBarLayer::handleMouseMotionInput(const SDL_MouseMotionEvent &event, c
     return false;
 }
 
-bool ScrollBarLayer::handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState)
+bool ScrollBarComponent::handleMouseWheel(
+    const SDL_MouseWheelEvent &event,
+    const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;

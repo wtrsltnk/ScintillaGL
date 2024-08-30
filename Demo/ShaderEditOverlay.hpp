@@ -1,7 +1,9 @@
 #pragma once
 
-#include "iscreenlayer.hpp"
+#include "icomponent.hpp"
 #include "localmenuitem.hpp"
+#include "menucomponent.hpp"
+#include "splittercomponent.hpp"
 #include <SDL.h>
 #include <assert.h>
 #include <glad/glad.h>
@@ -40,9 +42,9 @@ private:
     struct InputState _inputState;
     static std::vector<LocalMenuItem> wouterMenu;
 
-    std::shared_ptr<class MenuLayer> _menuLayer;
-    std::shared_ptr<class TabbedEditorsLayer> _tabbedEditorsLayer;
-    std::vector<std::weak_ptr<IScreenLayer>> _layers;
+    std::shared_ptr<MenuComponent> _menu;
+    std::shared_ptr<SplitterComponent> _editors;
+    std::vector<std::weak_ptr<IComponent>> _components;
 
     void UpdateMods(const SDL_KeyboardEvent &event);
 };
