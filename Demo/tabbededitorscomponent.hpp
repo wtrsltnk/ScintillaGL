@@ -35,12 +35,12 @@ public:
     void loadFile(const std::string &fileName);
     void newTab();
 
+    std::vector<std::shared_ptr<EditorComponent>> tabs;
 private:
     std::unique_ptr<Font> &_font;
     int _width = 0.0f;
     int _height = 0.0f;
     glm::vec2 _origin;
-    std::vector<std::shared_ptr<EditorComponent>> _tabs;
     size_t _activeTab = 0;
     bool _draggingTab = false;
     int _draggingStartX = 0;

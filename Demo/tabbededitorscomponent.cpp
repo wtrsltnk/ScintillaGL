@@ -40,7 +40,7 @@ void TabbedEditorsComponent::loadFile(const std::string &fileName)
 
     editorLayer->title = std::filesystem::path(fileName).filename().generic_string();
     editorLayer->loadContent(buffer.str());
-    _tabs.push_back(std::move(editorLayer));
+    tabs.push_back(std::move(editorLayer));
 }
 
 void TabbedEditorsComponent::newTab()
@@ -50,7 +50,7 @@ void TabbedEditorsComponent::newTab()
     editorLayer->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
 
     editorLayer->title = "empty.c";
-    _tabs.push_back(std::move(editorLayer));
+    tabs.push_back(std::move(editorLayer));
 }
 
 glm::vec4 textFore = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -115,7 +115,7 @@ void TabbedEditorsComponent::render(
 
     scr::Rectangle activeTabRect = RenderTab(inputState, " + ", x, y, false);
 
-    for (const auto &tab : _tabs)
+    for (const auto &tab : tabs)
     {
         auto title = tab->title;
         if (title.empty())
@@ -123,7 +123,7 @@ void TabbedEditorsComponent::render(
             title = "unnamed";
         }
 
-        bool isActiveTab = _tabs[_activeTab] == tab;
+        bool isActiveTab = tabs[_activeTab] == tab;
 
         auto border = RenderTab(inputState, tab->title, x, y, isActiveTab);
 
@@ -151,9 +151,9 @@ void TabbedEditorsComponent::render(
     glVertex2f(_origin.x, _origin.y + _height);
     glEnd();
 
-    if (!_tabs.empty() && _tabs.size() > _activeTab)
+    if (!tabs.empty() && tabs.size() > _activeTab)
     {
-        _tabs[_activeTab]->render(inputState);
+        tabs[_activeTab]->render(inputState);
     }
 }
 
@@ -180,7 +180,7 @@ void TabbedEditorsComponent::resize(int x, int y, int w, int h)
         y = _origin.y;
     }
 
-    for (const auto &tab : _tabs)
+    for (const auto &tab : tabs)
     {
         tab->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
     }
@@ -203,9 +203,9 @@ bool TabbedEditorsComponent::handleKeyDown(
     (void)event;
     (void)inputState;
 
-    if (!_tabs.empty() && _tabs.size() > _activeTab)
+    if (!tabs.empty() && tabs.size() > _activeTab)
     {
-        return _tabs[_activeTab]->handleKeyDown(event, inputState);
+        return tabs[_activeTab]->handleKeyDown(event, inputState);
     }
 
     return false;
@@ -218,9 +218,9 @@ bool TabbedEditorsComponent::handleKeyUp(
     (void)event;
     (void)inputState;
 
-    if (!_tabs.empty() && _tabs.size() > _activeTab)
+    if (!tabs.empty() && tabs.size() > _activeTab)
     {
-        return _tabs[_activeTab]->handleKeyUp(event, inputState);
+        return tabs[_activeTab]->handleKeyUp(event, inputState);
     }
 
     return false;
@@ -233,9 +233,9 @@ bool TabbedEditorsComponent::handleTextInput(
     (void)event;
     (void)inputState;
 
-    if (!_tabs.empty() && _tabs.size() > _activeTab)
+    if (!tabs.empty() && tabs.size() > _activeTab)
     {
-        return _tabs[_activeTab]->handleTextInput(event, inputState);
+        return tabs[_activeTab]->handleTextInput(event, inputState);
     }
 
     return false;
@@ -268,9 +268,9 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
             return true;
         }
 
-        for (size_t i = 0; i < _tabs.size(); i++)
+        for (size_t i = 0; i < tabs.size(); i++)
         {
-            const auto &tab = _tabs[i];
+            const auto &tab = tabs[i];
             border = GetBorderRectangle(tab->title, x, y);
 
             if (border.Contains(glm::vec2(event.x, event.y)))
@@ -286,7 +286,7 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
                 }
                 else if (event.button == SDL_BUTTON_MIDDLE)
                 {
-                    _tabs.erase(std::next(_tabs.begin(), i));
+                    tabs.erase(std::next(tabs.begin(), i));
 
                     if (_activeTab == i)
                     {
@@ -305,9 +305,9 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
         _draggingTab = false;
     }
 
-    if (!_tabs.empty() && _tabs.size() > _activeTab)
+    if (!tabs.empty() && tabs.size() > _activeTab)
     {
-        return _tabs[_activeTab]->handleMouseButtonInput(event, inputState);
+        return tabs[_activeTab]->handleMouseButtonInput(event, inputState);
     }
 
     return false;
@@ -330,9 +330,9 @@ bool TabbedEditorsComponent::handleMouseMotionInput(
         return false;
     }
 
-    if (!_tabs.empty() && _tabs.size() > _activeTab)
+    if (!tabs.empty() && tabs.size() > _activeTab)
     {
-        return _tabs[_activeTab]->handleMouseMotionInput(event, inputState);
+        return tabs[_activeTab]->handleMouseMotionInput(event, inputState);
     }
 
     return false;
@@ -345,9 +345,9 @@ bool TabbedEditorsComponent::handleMouseWheel(
     (void)event;
     (void)inputState;
 
-    if (!_tabs.empty() && _tabs.size() > _activeTab)
+    if (!tabs.empty() && tabs.size() > _activeTab)
     {
-        return _tabs[_activeTab]->handleMouseWheel(event, inputState);
+        return tabs[_activeTab]->handleMouseWheel(event, inputState);
     }
 
     return false;
