@@ -4,7 +4,6 @@
 #include "editorcomponent.hpp"
 #include "icomponent.hpp"
 #include "screen-utils.hpp"
-#include <glm/glm.hpp>
 #include <memory>
 #include <vector>
 
@@ -18,9 +17,6 @@ public:
 
     virtual void render(const struct InputState &inputState);
     virtual void resize(int x, int y, int w, int h);
-
-    virtual int width();
-    virtual int height();
 
     virtual bool handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState);
     virtual bool handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState &inputState);
@@ -38,9 +34,6 @@ public:
     std::vector<std::shared_ptr<EditorComponent>> tabs;
 private:
     std::unique_ptr<Font> &_font;
-    int _width = 0.0f;
-    int _height = 0.0f;
-    glm::vec2 _origin;
     size_t _activeTab = 0;
     bool _draggingTab = false;
     int _draggingStartX = 0;

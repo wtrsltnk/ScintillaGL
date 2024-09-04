@@ -204,16 +204,6 @@ scr::Rectangle SplitterComponent::GetAddSplitButtonRect()
     return rect;
 }
 
-int SplitterComponent::width()
-{
-    return _width;
-}
-
-int SplitterComponent::height()
-{
-    return _height;
-}
-
 std::shared_ptr<TabbedEditorsComponent> &SplitterComponent::ActiveEditor()
 {
     if (_editor != nullptr)
@@ -405,6 +395,8 @@ bool SplitterComponent::handleMouseMotionInput(
 
                 return true;
             }
+
+            return false;
         }
 
         return _editor->handleMouseMotionInput(event, inputState);

@@ -19,7 +19,6 @@ public:
     virtual void render(const struct InputState &inputState);
     virtual void resize(int x, int y, int w, int h);
 
-    virtual int width();
     virtual int height();
 
     virtual bool handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState);
@@ -31,9 +30,6 @@ public:
 
 private:
     std::unique_ptr<Font> &_font;
-    int _width = 0.0f;
-    int _height = 0.0f;
-    glm::vec2 _origin;
     std::shared_ptr<MenuComponent> _openSubMenu;
     std::string _subMenuParentName;
     bool _mouseDownOnMenuItem = false;

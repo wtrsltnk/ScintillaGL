@@ -113,7 +113,7 @@ void TabbedEditorsComponent::render(
     glVertex2f(_origin.x, _origin.y + tabBarHeight - border);
     glEnd();
 
-    scr::Rectangle activeTabRect = RenderTab(inputState, " + ", x, y, false);
+    scr::Rectangle activeTabRect;
 
     for (const auto &tab : tabs)
     {
@@ -132,6 +132,8 @@ void TabbedEditorsComponent::render(
             activeTabRect = border;
         }
     }
+
+    RenderTab(inputState, " + ", x, y, false);
 
     glBegin(GL_LINE_STRIP);
     glColor4f(0.1f, 0.1f, 0.1f, 1.0f);
@@ -184,16 +186,6 @@ void TabbedEditorsComponent::resize(int x, int y, int w, int h)
     {
         tab->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
     }
-}
-
-int TabbedEditorsComponent::width()
-{
-    return _width;
-}
-
-int TabbedEditorsComponent::height()
-{
-    return _height;
 }
 
 bool TabbedEditorsComponent::handleKeyDown(
@@ -257,21 +249,15 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
     {
         float x = _origin.x, y = _origin.y;
 
-        auto border = GetBorderRectangle(" + ", x, y);
-
-        x = border.right;
-
-        if (border.Contains(glm::vec2(event.x, event.y)))
-        {
-            newTab();
-
-            return true;
-        }
-
         for (size_t i = 0; i < tabs.size(); i++)
         {
+            if (tabs[i]->isHit(glm::vec2(event.x, event.y)) && _activeTab == i)
+            {
+                IComponent::componentWithKeyboardFocus = tabs[i];
+            }
+
             const auto &tab = tabs[i];
-            border = GetBorderRectangle(tab->title, x, y);
+            auto border = GetBorderRectangle(tab->title, x, y);
 
             if (border.Contains(glm::vec2(event.x, event.y)))
             {
@@ -297,6 +283,17 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
             }
 
             x = border.right;
+        }
+
+        auto plusBorder = GetBorderRectangle(" + ", x, y);
+
+        x = plusBorder.right;
+
+        if (plusBorder.Contains(glm::vec2(event.x, event.y)))
+        {
+            newTab();
+
+            return true;
         }
     }
 

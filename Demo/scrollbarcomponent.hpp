@@ -15,9 +15,6 @@ public:
     virtual void render(const struct InputState &inputState);
     virtual void resize(int x, int y, int w, int h);
 
-    virtual int width();
-    virtual int height();
-
     virtual bool handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState);
     virtual bool handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState &inputState);
     virtual bool handleTextInput(const SDL_TextInputEvent &event, const struct InputState &inputState);
@@ -29,10 +26,6 @@ public:
     std::function<void(float &,float &)> getScrollInfo;
 
 private:
-    int _width = 0.0f;
-    int _height = 0.0f;
-    glm::vec2 _origin;
-
     int scrollBarWidth = 15;
     bool _scrolling = false;
     bool _hoverScroll = false;

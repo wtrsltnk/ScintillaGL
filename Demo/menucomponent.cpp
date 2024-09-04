@@ -223,11 +223,6 @@ void MenuComponent::resize(int x, int y, int w, int h)
     }
 }
 
-int MenuComponent::width()
-{
-    return _width;
-}
-
 int MenuComponent::height()
 {
     return menuHeight;

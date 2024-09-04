@@ -2,6 +2,8 @@
 #define ICOMPONENT_H
 
 #include <SDL.h>
+#include <glm/glm.hpp>
+#include <memory>
 
 struct InputState
 {
@@ -23,8 +25,8 @@ public:
     virtual void render(const struct InputState &inputState) = 0;
     virtual void resize(int x, int y, int w, int h) = 0;
 
-    virtual int width() = 0;
-    virtual int height() = 0;
+    virtual int width();
+    virtual int height();
 
     virtual bool handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState) = 0;
     virtual bool handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState &inputState) = 0;
@@ -33,7 +35,15 @@ public:
     virtual bool handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState) = 0;
     virtual bool handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState) = 0;
 
-    static IComponent *componentWithKeyboardFocus;
+    static std::shared_ptr<IComponent> componentWithKeyboardFocus;
+
+    bool isHit(
+        const glm::vec2 &p);
+
+protected:
+    int _width = 0.0f;
+    int _height = 0.0f;
+    glm::vec2 _origin;
 };
 
 #endif // ICOMPONENT_H

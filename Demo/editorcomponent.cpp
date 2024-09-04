@@ -164,16 +164,6 @@ void EditorComponent::resize(int x, int y, int w, int h)
     _scrollBarLayer.resize(_origin.x, _origin.y, _width, _height);
 }
 
-int EditorComponent::width()
-{
-    return _width;
-}
-
-int EditorComponent::height()
-{
-    return _height;
-}
-
 bool EditorComponent::handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState)
 {
     if (_scrollBarLayer.handleKeyDown(event, inputState)) return true;
@@ -320,13 +310,10 @@ bool EditorComponent::handleMouseButtonInput(
 {
     (void)inputState;
 
-    if (event.x < _origin.x || event.y < _origin.y
-        || event.x > _origin.x + _width || event.y > _origin.y + _height)
+    if (!isHit(glm::vec2(inputState.mouseX, inputState.mouseY)))
     {
         return false;
     }
-
-    IComponent::componentWithKeyboardFocus = this;
 
     if (_scrollBarLayer.handleMouseButtonInput(event, inputState)) return true;
 
@@ -344,8 +331,7 @@ bool EditorComponent::handleMouseMotionInput(
 {
     (void)inputState;
 
-    if (event.x < _origin.x || event.y < _origin.y
-        || event.x > _origin.x + _width || event.y > _origin.y + _height)
+    if (!isHit(glm::vec2(inputState.mouseX, inputState.mouseY)))
     {
         return false;
     }
@@ -364,8 +350,7 @@ bool EditorComponent::handleMouseWheel(
     const SDL_MouseWheelEvent &event,
     const struct InputState &inputState)
 {
-    if (inputState.mouseX < _origin.x || inputState.mouseY < _origin.y
-        || inputState.mouseX > _origin.x + _width || inputState.mouseY > _origin.y + _height)
+    if (!isHit(glm::vec2(inputState.mouseX, inputState.mouseY)))
     {
         return false;
     }

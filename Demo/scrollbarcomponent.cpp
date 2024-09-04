@@ -56,16 +56,6 @@ void ScrollBarComponent::resize(int x, int y, int w, int h)
     _origin.y = y;
 }
 
-int ScrollBarComponent::width()
-{
-    return _width;
-}
-
-int ScrollBarComponent::height()
-{
-    return _height;
-}
-
 bool ScrollBarComponent::handleKeyDown(
     const SDL_KeyboardEvent &event,
     const struct InputState &inputState)
