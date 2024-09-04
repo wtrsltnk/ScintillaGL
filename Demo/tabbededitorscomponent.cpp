@@ -34,7 +34,7 @@ void TabbedEditorsComponent::loadFile(const std::string &fileName)
     std::ifstream t(fileName.c_str());
     buffer << t.rdbuf();
 
-    auto editorLayer = std::make_unique<EditorComponent>();
+    auto editorLayer = std::make_shared<EditorComponent>();
     editorLayer->init(glm::vec2(_origin.x, _origin.y + tabBarHeight));
     editorLayer->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
 
@@ -43,7 +43,57 @@ void TabbedEditorsComponent::loadFile(const std::string &fileName)
     _tabs.push_back(std::move(editorLayer));
 }
 
-void TabbedEditorsComponent::render(const struct InputState &inputState)
+void TabbedEditorsComponent::newTab()
+{
+    auto editorLayer = std::make_shared<EditorComponent>();
+    editorLayer->init(glm::vec2(_origin.x, _origin.y + tabBarHeight));
+    editorLayer->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
+
+    editorLayer->title = "empty.c";
+    _tabs.push_back(std::move(editorLayer));
+}
+
+glm::vec4 textFore = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+scr::Rectangle TabbedEditorsComponent::RenderTab(
+    const struct InputState &inputState,
+    const std::string &text,
+    float &x,
+    float &y,
+    bool isActiveTab)
+{
+    float width = WidthText(_font, text.c_str(), text.size());
+
+    float xbase = x + tabItemMargin.Left + tabItemPadding.Left;
+    float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
+
+    auto border = GetBorderRectangle(text, x, y);
+
+    bool hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
+
+    if (inputState.mouseX < _origin.x || inputState.mouseX > _origin.x + _width || inputState.mouseY < _origin.y || inputState.mouseY > _origin.y + _height)
+    {
+        hover = false;
+    }
+
+    glBegin(GL_QUADS);
+    glColor4f(0.2f, 0.2f, 0.2f, isActiveTab ? 1.0f : hover ? 0.6f
+                                                           : 0.4f);
+    glVertex2f(border.left, border.top);
+    glVertex2f(border.right, border.top);
+    glVertex2f(border.right, border.bottom);
+    glVertex2f(border.left, border.bottom);
+    glEnd();
+
+    DrawTextBase(_font, xbase, ybase + 20.0f, text.c_str(), text.size(), textFore);
+
+    x = xbase + width + tabItemPadding.Right + tabItemMargin.Right;
+
+    return border;
+}
+
+void TabbedEditorsComponent::render(
+    const struct InputState &inputState)
 {
     const float border = 4.0f;
 
@@ -51,7 +101,6 @@ void TabbedEditorsComponent::render(const struct InputState &inputState)
 
     float x = _origin.x;
     float y = _origin.y;
-    glm::vec4 textFore = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -64,7 +113,7 @@ void TabbedEditorsComponent::render(const struct InputState &inputState)
     glVertex2f(_origin.x, _origin.y + tabBarHeight - border);
     glEnd();
 
-    scr::Rectangle activeTabRect;
+    scr::Rectangle activeTabRect = RenderTab(inputState, " + ", x, y, false);
 
     for (const auto &tab : _tabs)
     {
@@ -74,49 +123,23 @@ void TabbedEditorsComponent::render(const struct InputState &inputState)
             title = "unnamed";
         }
 
-        float width = WidthText(_font, title.c_str(), title.size());
-
-        float xbase = x + tabItemMargin.Left + tabItemPadding.Left;
-        float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
-
-        auto border = GetBorderRectangle(tab, x, y);
-
-        bool hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
-
-        if (inputState.mouseX < _origin.x || inputState.mouseX > _origin.x + _width
-            || inputState.mouseY < _origin.y || inputState.mouseY > _origin.y + _height)
-        {
-            hover = false;
-        }
-
         bool isActiveTab = _tabs[_activeTab] == tab;
+
+        auto border = RenderTab(inputState, tab->title, x, y, isActiveTab);
 
         if (isActiveTab)
         {
             activeTabRect = border;
         }
-
-        glBegin(GL_QUADS);
-        glColor4f(0.2f, 0.2f, 0.2f, isActiveTab ? 1.0f : hover ? 0.6f
-                                                               : 0.4f);
-        glVertex2f(border.left, border.top);
-        glVertex2f(border.right, border.top);
-        glVertex2f(border.right, border.bottom);
-        glVertex2f(border.left, border.bottom);
-        glEnd();
-
-        DrawTextBase(_font, xbase, ybase + 20.0f, title.c_str(), title.size(), textFore);
-
-        x = xbase + width + tabItemPadding.Right + tabItemMargin.Right;
     }
 
     glBegin(GL_LINE_STRIP);
-    glColor4f(0.3f, 0.0f, 0.0f, 1.0f);
+    glColor4f(0.1f, 0.1f, 0.1f, 1.0f);
     glVertex2f(_origin.x, _origin.y + tabBarHeight - border);
-    glVertex2f(_origin.x + activeTabRect.left, _origin.y + tabBarHeight - border);
-    glVertex2f(_origin.x + activeTabRect.left, activeTabRect.top);
-    glVertex2f(_origin.x + activeTabRect.right, activeTabRect.top);
-    glVertex2f(_origin.x + activeTabRect.right, _origin.y + tabBarHeight - border);
+    glVertex2f(activeTabRect.left, _origin.y + tabBarHeight - border);
+    glVertex2f(activeTabRect.left, activeTabRect.top);
+    glVertex2f(activeTabRect.right, activeTabRect.top);
+    glVertex2f(activeTabRect.right, _origin.y + tabBarHeight - border);
     glVertex2f(_origin.x + _width, _origin.y + tabBarHeight - border);
     glEnd();
 
@@ -124,8 +147,8 @@ void TabbedEditorsComponent::render(const struct InputState &inputState)
     glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
     glVertex2f(_origin.x, _origin.y + tabBarHeight - border);
     glVertex2f(_origin.x + _width, _origin.y + tabBarHeight - border);
-    glVertex2f(_origin.x + _width, _origin.y + tabBarHeight);
-    glVertex2f(_origin.x, _origin.y + tabBarHeight);
+    glVertex2f(_origin.x + _width, _origin.y + _height);
+    glVertex2f(_origin.x, _origin.y + _height);
     glEnd();
 
     if (!_tabs.empty() && _tabs.size() > _activeTab)
@@ -225,8 +248,7 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
     (void)event;
     (void)inputState;
 
-    if (event.x < _origin.x || event.x > _origin.x + _width
-        || event.y < _origin.y || event.y > _origin.y + _height)
+    if (event.x < _origin.x || event.x > _origin.x + _width || event.y < _origin.y || event.y > _origin.y + _height)
     {
         return false;
     }
@@ -235,10 +257,21 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
     {
         float x = _origin.x, y = _origin.y;
 
+        auto border = GetBorderRectangle(" + ", x, y);
+
+        x = border.right;
+
+        if (border.Contains(glm::vec2(event.x, event.y)))
+        {
+            newTab();
+
+            return true;
+        }
+
         for (size_t i = 0; i < _tabs.size(); i++)
         {
             const auto &tab = _tabs[i];
-            auto border = GetBorderRectangle(tab, x, y);
+            border = GetBorderRectangle(tab->title, x, y);
 
             if (border.Contains(glm::vec2(event.x, event.y)))
             {
@@ -292,8 +325,7 @@ bool TabbedEditorsComponent::handleMouseMotionInput(
         return true;
     }
 
-    if (event.x < _origin.x || event.x > _origin.x + _width
-        || event.y < _origin.y || event.y > _origin.y + _height)
+    if (event.x < _origin.x || event.x > _origin.x + _width || event.y < _origin.y || event.y > _origin.y + _height)
     {
         return false;
     }
@@ -322,11 +354,11 @@ bool TabbedEditorsComponent::handleMouseWheel(
 }
 
 scr::Rectangle TabbedEditorsComponent::GetBorderRectangle(
-    const std::unique_ptr<EditorComponent> &tab,
+    const std::string &text,
     float &x,
     float &y)
 {
-    float width = WidthText(_font, tab->title.c_str(), tab->title.size());
+    float width = WidthText(_font, text.c_str(), text.size());
 
     auto nextx = x + tabItemMargin.Left + tabItemPadding.Left  // Left margin and padding
                  + width                                       // This is the text with

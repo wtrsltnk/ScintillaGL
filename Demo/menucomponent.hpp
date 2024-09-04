@@ -34,7 +34,7 @@ private:
     int _width = 0.0f;
     int _height = 0.0f;
     glm::vec2 _origin;
-    std::unique_ptr<MenuComponent> _openSubMenu;
+    std::shared_ptr<MenuComponent> _openSubMenu;
     std::string _subMenuParentName;
     bool _mouseDownOnMenuItem = false;
 

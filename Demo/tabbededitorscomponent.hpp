@@ -33,17 +33,29 @@ public:
     struct scr::Margin tabItemMargin;
 
     void loadFile(const std::string &fileName);
+    void newTab();
+
 private:
     std::unique_ptr<Font> &_font;
     int _width = 0.0f;
     int _height = 0.0f;
     glm::vec2 _origin;
-    std::vector<std::unique_ptr<EditorComponent>> _tabs;
+    std::vector<std::shared_ptr<EditorComponent>> _tabs;
     size_t _activeTab = 0;
     bool _draggingTab = false;
     int _draggingStartX = 0;
 
-    scr::Rectangle GetBorderRectangle(const std::unique_ptr<EditorComponent> &tab, float &x, float &y);
+    scr::Rectangle GetBorderRectangle(
+        const std::string &text,
+        float &x,
+        float &y);
+
+    scr::Rectangle RenderTab(
+        const struct InputState &inputState,
+        const std::string &text,
+        float &x,
+        float &y,
+        bool isActiveTab);
 };
 
 #endif // TABBEDEDITORSLAYER_HPP

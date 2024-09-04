@@ -32,6 +32,8 @@ public:
     virtual bool handleMouseButtonInput(const SDL_MouseButtonEvent &event, const struct InputState &inputState) = 0;
     virtual bool handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState) = 0;
     virtual bool handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState) = 0;
+
+    static IComponent *componentWithKeyboardFocus;
 };
 
 #endif // ICOMPONENT_H

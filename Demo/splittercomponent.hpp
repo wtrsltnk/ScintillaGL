@@ -26,17 +26,22 @@ public:
     virtual bool handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState);
     virtual bool handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState);
 
-    std::unique_ptr<TabbedEditorsComponent>& ActiveEditor();
+    std::shared_ptr<TabbedEditorsComponent>& ActiveEditor();
 private:
     std::unique_ptr<Font> &_font;
     int _width = 0.0f;
     int _height = 0.0f;
     glm::vec2 _origin;
-    std::unique_ptr<TabbedEditorsComponent> _editor;
-    std::unique_ptr<SplitterComponent> _panel1;
-    std::unique_ptr<SplitterComponent> _panel2;
+    std::shared_ptr<TabbedEditorsComponent> _editor;
+    std::shared_ptr<SplitterComponent> _panel1;
+    std::shared_ptr<SplitterComponent> _panel2;
     float _splitAt = 0.5f;
     bool _verticalSplitting = false;
+
+    bool _isSplitMoving = false;
+    glm::vec2 _splitMovingStart;
+
+    scr::Rectangle GetSplitBarRect();
 };
 
 #endif // SPLITTERCOMPONENT_HPP

@@ -303,7 +303,7 @@ bool MenuComponent::handleMouseButtonInput(
 
                     if (_openSubMenu != nullptr)
                     {
-                        _openSubMenu.release();
+                        _openSubMenu = nullptr;
                         _subMenuParentName = std::string();
                     }
                 }
@@ -311,7 +311,7 @@ bool MenuComponent::handleMouseButtonInput(
                 {
                     _subMenuParentName = menuItem.name;
 
-                    _openSubMenu = std::make_unique<MenuComponent>(_font);
+                    _openSubMenu = std::make_shared<MenuComponent>(_font);
                     if (_direction == scr::Direction::Horizontal)
                     {
                         _openSubMenu->init(menuItem.subMenu, glm::vec2(border.left, border.bottom));
@@ -338,7 +338,7 @@ bool MenuComponent::handleMouseButtonInput(
         }
 
         _subMenuParentName = std::string();
-        _openSubMenu.release();
+        _openSubMenu = nullptr;
     }
 
     return false;
@@ -374,7 +374,7 @@ bool MenuComponent::handleMouseMotionInput(
             {
                 _subMenuParentName = menuItem.name;
 
-                _openSubMenu = std::make_unique<MenuComponent>(_font);
+                _openSubMenu = std::make_shared<MenuComponent>(_font);
                 if (_direction == scr::Direction::Horizontal)
                 {
                     _openSubMenu->init(menuItem.subMenu, glm::vec2(border.left, border.bottom));

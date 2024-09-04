@@ -16,6 +16,8 @@ void ScrollBarComponent::render(
 {
     (void)inputState;
 
+    _hoverScroll = (inputState.mouseX - _origin.x) > (_width - (scrollBarWidth * 5)) && (inputState.mouseX - _origin.x) < _width;
+
     float start = 0.0f, length = _height;
     if (getScrollInfo)
     {
@@ -30,19 +32,19 @@ void ScrollBarComponent::render(
     glBegin(GL_QUADS);
     glColor4f(0.7f, 0.7f, 0.7f, _hoverScroll || _scrolling ? 1.0f : 0.4f);
 
-    glVertex2f(_width - scrollBarWidth, _origin.y + _height * start);
-    glVertex2f(_width, _origin.y + _height * start);
-    glVertex2f(_width, _origin.y + _height * (start + length));
-    glVertex2f(_width - scrollBarWidth, _origin.y + _height * (start + length));
+    glVertex2f(_origin.x + _width - scrollBarWidth, _origin.y + _height * start);
+    glVertex2f(_origin.x + _width, _origin.y + _height * start);
+    glVertex2f(_origin.x + _width, _origin.y + _height * (start + length));
+    glVertex2f(_origin.x + _width - scrollBarWidth, _origin.y + _height * (start + length));
     glEnd();
 
     glBegin(GL_LINE_LOOP);
     glColor4f(0.0f, 0.0f, 0.0f, _hoverScroll || _scrolling ? 1.0f : 0.4f);
 
-    glVertex2f(_width - scrollBarWidth, _origin.y + _height * start);
-    glVertex2f(_width, _origin.y + _height * start);
-    glVertex2f(_width, _origin.y + _height * (start + length));
-    glVertex2f(_width - scrollBarWidth, _origin.y + _height * (start + length));
+    glVertex2f(_origin.x + _width - scrollBarWidth, _origin.y + _height * start);
+    glVertex2f(_origin.x + _width, _origin.y + _height * start);
+    glVertex2f(_origin.x + _width, _origin.y + _height * (start + length));
+    glVertex2f(_origin.x + _width - scrollBarWidth, _origin.y + _height * (start + length));
     glEnd();
 }
 
@@ -121,8 +123,6 @@ bool ScrollBarComponent::handleMouseMotionInput(
     const struct InputState &inputState)
 {
     (void)inputState;
-
-    _hoverScroll = (event.x - _origin.x) > (_width - (scrollBarWidth * 5));
 
     if (_scrolling)
     {
