@@ -71,7 +71,22 @@ void SplitterComponent::render(
     {
         _editor->render(inputState);
 
-        auto rect = GetAddSplitButtonRect();
+        glClipPlane(GL_CLIP_PLANE0, plane[0]);
+        glClipPlane(GL_CLIP_PLANE1, plane[1]);
+        glClipPlane(GL_CLIP_PLANE2, plane[2]);
+        glClipPlane(GL_CLIP_PLANE3, plane[3]);
+
+        auto rect = GetAddSplitButtonRect1();
+
+        glBegin(GL_QUADS);
+        glColor4f(0.5f, 0.5f, 0.5f, rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)) ? 1.0f : 0.0f);
+        glVertex2f(rect.left, rect.top);
+        glVertex2f(rect.right, rect.top);
+        glVertex2f(rect.right, rect.bottom);
+        glVertex2f(rect.left, rect.bottom);
+        glEnd();
+
+        rect = GetAddSplitButtonRect2();
 
         glBegin(GL_QUADS);
         glColor4f(0.5f, 0.5f, 0.5f, rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)) ? 1.0f : 0.0f);
@@ -190,7 +205,7 @@ scr::Rectangle SplitterComponent::GetSplitBarRect()
     return rect;
 }
 
-scr::Rectangle SplitterComponent::GetAddSplitButtonRect()
+scr::Rectangle SplitterComponent::GetAddSplitButtonRect1()
 {
     const float buttonSize = 20.0f;
 
@@ -198,6 +213,20 @@ scr::Rectangle SplitterComponent::GetAddSplitButtonRect()
 
     rect.left = _origin.x + _width - buttonSize;
     rect.right = _origin.x + _width;
+    rect.top = _origin.y + _height - buttonSize;
+    rect.bottom = _origin.y + _height;
+
+    return rect;
+}
+
+scr::Rectangle SplitterComponent::GetAddSplitButtonRect2()
+{
+    const float buttonSize = 20.0f;
+
+    scr::Rectangle rect;
+
+    rect.left = _origin.x;
+    rect.right = _origin.x + buttonSize;
     rect.top = _origin.y + _height - buttonSize;
     rect.bottom = _origin.y + _height;
 
@@ -285,13 +314,21 @@ bool SplitterComponent::handleMouseButtonInput(
             return true;
         }
 
-        if (_editor != nullptr && GetAddSplitButtonRect().Contains(glm::vec2(event.x, event.y)))
+        if (_editor != nullptr && GetAddSplitButtonRect1().Contains(glm::vec2(event.x, event.y)))
         {
             _isAddingSplit = true;
 
             _addingSplitStart = glm::vec2(event.x, event.y);
 
-            std::cout << "start adding split" << std::endl;
+            return true;
+        }
+
+        if (_editor != nullptr && GetAddSplitButtonRect2().Contains(glm::vec2(event.x, event.y)))
+        {
+            _isAddingSplit = true;
+
+            _addingSplitStart = glm::vec2(event.x, event.y);
+
             return true;
         }
     }
@@ -315,18 +352,43 @@ bool SplitterComponent::handleMouseButtonInput(
 
 void SplitterComponent::CollapsePanel1()
 {
-    _editor = _panel2->_editor;
-    _panel2->_editor->tabs.insert(_panel2->_editor->tabs.begin(), _panel1->_editor->tabs.begin(), _panel1->_editor->tabs.end());
-    _panel1 = nullptr;
-    _panel2 = nullptr;
+    if (_panel1->_editor != nullptr)
+    {
+        _editor = _panel2->_editor;
+        _panel2->_editor->tabs.insert(_panel2->_editor->tabs.begin(), _panel1->_editor->tabs.begin(), _panel1->_editor->tabs.end());
+        _panel1 = nullptr;
+        _panel2 = nullptr;
+    }
+    else
+    {
+        _verticalSplitting = _panel2->_verticalSplitting;
+        _splitAt = _panel2->_splitAt;
+        auto p1 = _panel2->_panel1;
+        auto p2 = _panel2->_panel2;
+        _panel1 = p1;
+        _panel2 = p2;
+    }
 }
 
 void SplitterComponent::CollapsePanel2()
 {
-    _editor = _panel1->_editor;
-    _panel1->_editor->tabs.insert(_panel1->_editor->tabs.end(), _panel2->_editor->tabs.begin(), _panel2->_editor->tabs.end());
-    _panel1 = nullptr;
-    _panel2 = nullptr;
+    if (_panel1->_editor != nullptr)
+    {
+        _editor = _panel1->_editor;
+        _panel1->_editor->tabs.insert(_panel1->_editor->tabs.end(), _panel2->_editor->tabs.begin(), _panel2->_editor->tabs.end());
+
+        _panel1 = nullptr;
+        _panel2 = nullptr;
+    }
+    else
+    {
+        _verticalSplitting = _panel1->_verticalSplitting;
+        _splitAt = _panel1->_splitAt;
+        auto p1 = _panel1->_panel1;
+        auto p2 = _panel1->_panel2;
+        _panel1 = p1;
+        _panel2 = p2;
+    }
 }
 
 void SplitterComponent::AddVerticalSplit(

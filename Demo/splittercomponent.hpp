@@ -52,7 +52,8 @@ private:
         const glm::vec2 &mouse);
 
     scr::Rectangle GetSplitBarRect();
-    scr::Rectangle GetAddSplitButtonRect();
+    scr::Rectangle GetAddSplitButtonRect1();
+    scr::Rectangle GetAddSplitButtonRect2();
 };
 
 #endif // SPLITTERCOMPONENT_HPP
