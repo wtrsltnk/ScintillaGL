@@ -43,7 +43,8 @@ void TabbedEditorsComponent::loadFile(const std::string &fileName)
     tabs.push_back(std::move(editorLayer));
 }
 
-void TabbedEditorsComponent::newTab()
+void TabbedEditorsComponent::newTab(
+    bool switchTo)
 {
     auto editorLayer = std::make_shared<EditorComponent>();
     editorLayer->init(glm::vec2(_origin.x, _origin.y + tabBarHeight));
@@ -51,6 +52,11 @@ void TabbedEditorsComponent::newTab()
 
     editorLayer->title = "empty.c";
     tabs.push_back(std::move(editorLayer));
+
+    if (switchTo)
+    {
+        _activeTab = tabs.size() - 1;
+    }
 }
 
 glm::vec4 textFore = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -64,7 +70,7 @@ scr::Rectangle TabbedEditorsComponent::RenderTab(
 {
     float width = WidthText(_font, text.c_str(), text.size());
 
-    float xbase = x + tabItemMargin.Left + tabItemPadding.Left;
+    float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
     float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
 
     auto border = GetBorderRectangle(text, x, y);
@@ -112,6 +118,11 @@ void TabbedEditorsComponent::render(
     glVertex2f(_origin.x + _width, _origin.y + tabBarHeight - border);
     glVertex2f(_origin.x, _origin.y + tabBarHeight - border);
     glEnd();
+
+    if (IComponent::componentWithKeyboardFocus.get() == this && !tabs.empty())
+    {
+        tabs[_activeTab]->tick();
+    }
 
     scr::Rectangle activeTabRect;
 
@@ -195,6 +206,17 @@ bool TabbedEditorsComponent::handleKeyDown(
     (void)event;
     (void)inputState;
 
+    switch (event.keysym.sym)
+    {
+        case SDLK_n:
+            if (inputState.ctrl)
+            {
+                newTab(true);
+
+                return true;
+            }
+    }
+
     if (!tabs.empty() && tabs.size() > _activeTab)
     {
         return tabs[_activeTab]->handleKeyDown(event, inputState);
@@ -251,11 +273,6 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
 
         for (size_t i = 0; i < tabs.size(); i++)
         {
-            if (tabs[i]->isHit(glm::vec2(event.x, event.y)) && _activeTab == i)
-            {
-                IComponent::componentWithKeyboardFocus = tabs[i];
-            }
-
             const auto &tab = tabs[i];
             auto border = GetBorderRectangle(tab->title, x, y);
 

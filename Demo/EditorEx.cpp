@@ -7,6 +7,7 @@ void EditorEx::Resize(int x, int y, int w, int h)
     ContainerNeedsUpdate(SC_UPDATE_H_SCROLL);
     InvalidateStyleRedraw();
     ReconfigureScrollBars();
+    caret.period = 2500;
 }
 
 void EditorEx::DebugPrint()

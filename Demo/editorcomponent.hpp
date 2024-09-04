@@ -27,6 +27,7 @@ public:
 
     void loadContent(const std::string &content);
 
+    void tick(){mMainEditor.Tick();}
     std::string title;
 
 private:

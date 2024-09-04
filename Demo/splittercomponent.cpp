@@ -305,6 +305,25 @@ bool SplitterComponent::handleMouseButtonInput(
 
     if (event.type == SDL_MOUSEBUTTONDOWN)
     {
+        if (_editor != nullptr)
+        {
+            if (_editor->isHit(glm::vec2(event.x, event.y)))
+            {
+                IComponent::componentWithKeyboardFocus = _editor;
+            }
+        }
+        else
+        {
+            if (_panel1->isHit(glm::vec2(event.x, event.y)))
+            {
+                IComponent::componentWithKeyboardFocus = _panel1->ActiveEditor();
+            }
+            else if (_panel2->isHit(glm::vec2(event.x, event.y)))
+            {
+                IComponent::componentWithKeyboardFocus = _panel2->ActiveEditor();
+            }
+        }
+
         if (_editor == nullptr && GetSplitBarRect().Contains(glm::vec2(event.x, event.y)))
         {
             _isSplitMoving = true;
@@ -316,7 +335,7 @@ bool SplitterComponent::handleMouseButtonInput(
 
         if (_editor != nullptr && GetAddSplitButtonRect1().Contains(glm::vec2(event.x, event.y)))
         {
-            _isAddingSplit = true;
+            _isAddingSplit = 1;
 
             _addingSplitStart = glm::vec2(event.x, event.y);
 
@@ -325,7 +344,7 @@ bool SplitterComponent::handleMouseButtonInput(
 
         if (_editor != nullptr && GetAddSplitButtonRect2().Contains(glm::vec2(event.x, event.y)))
         {
-            _isAddingSplit = true;
+            _isAddingSplit = 2;
 
             _addingSplitStart = glm::vec2(event.x, event.y);
 
@@ -335,7 +354,7 @@ bool SplitterComponent::handleMouseButtonInput(
     else
     {
         _isSplitMoving = false;
-        _isAddingSplit = false;
+        _isAddingSplit = 0;
     }
 
     if (_editor != nullptr)
@@ -398,16 +417,19 @@ void SplitterComponent::AddVerticalSplit(
     _verticalSplitting = true;
 
     _panel1 = std::make_shared<SplitterComponent>(_font);
-    _panel1->init(_origin, 0.0f, false, _editor);
-    _editor = nullptr;
+    _panel1->init(_origin, 0.0f, false, _isAddingSplit == 1 ? _editor : nullptr);
 
     _panel2 = std::make_shared<SplitterComponent>(_font);
-    _panel2->init(_origin);
+    _panel2->init(_origin, 0.0f, false, _isAddingSplit == 2 ? _editor : nullptr);
+
+    _editor = nullptr;
 
     _isSplitMoving = true;
     _splitMovingStart = mouse;
 
     resize(_origin.x, _origin.y, _width, _height);
+
+    _isAddingSplit = 0;
 }
 
 void SplitterComponent::AddHorizontalSplit(
@@ -417,16 +439,19 @@ void SplitterComponent::AddHorizontalSplit(
     _verticalSplitting = false;
 
     _panel1 = std::make_shared<SplitterComponent>(_font);
-    _panel1->init(_origin, 0.0f, false, _editor);
-    _editor = nullptr;
+    _panel1->init(_origin, 0.0f, false, _isAddingSplit == 1 ? _editor : nullptr);
 
     _panel2 = std::make_shared<SplitterComponent>(_font);
-    _panel2->init(_origin);
+    _panel2->init(_origin, 0.0f, false, _isAddingSplit == 2 ? _editor : nullptr);
+
+    _editor = nullptr;
 
     _isSplitMoving = true;
     _splitMovingStart = mouse;
 
     resize(_origin.x, _origin.y, _width, _height);
+
+    _isAddingSplit = 0;
 }
 
 bool SplitterComponent::handleMouseMotionInput(
@@ -444,16 +469,12 @@ bool SplitterComponent::handleMouseMotionInput(
             {
                 AddVerticalSplit(glm::vec2(event.x, event.y));
 
-                _isAddingSplit = false;
-
                 return true;
             }
 
             if (glm::abs((event.y - _addingSplitStart.y)) > 10.0f)
             {
                 AddHorizontalSplit(glm::vec2(event.x, event.y));
-
-                _isAddingSplit = false;
 
                 return true;
             }

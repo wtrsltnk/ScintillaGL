@@ -40,7 +40,7 @@ private:
     bool _isSplitMoving = false;
     glm::vec2 _splitMovingStart;
 
-    bool _isAddingSplit = false;
+    int _isAddingSplit = 0;
     glm::vec2 _addingSplitStart;
 
     void CollapsePanel1();

@@ -28,8 +28,11 @@ public:
     struct scr::Padding tabItemPadding;
     struct scr::Margin tabItemMargin;
 
-    void loadFile(const std::string &fileName);
-    void newTab();
+    void loadFile(
+        const std::string &fileName);
+
+    void newTab(
+        bool switchTo = true);
 
     std::vector<std::shared_ptr<EditorComponent>> tabs;
 private:
