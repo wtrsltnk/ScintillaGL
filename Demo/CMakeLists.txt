@@ -18,6 +18,7 @@ target_sources(Demo
         "editorcomponent.cpp"
         "editorcomponent.hpp"
         "font-utils.hpp"
+        "icomponent.cpp"
         "icomponent.hpp"
         "menucomponent.cpp"
         "menucomponent.hpp"

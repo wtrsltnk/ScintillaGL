@@ -115,6 +115,13 @@ void ShaderEditOverlay::handleKeyDown(
 {
     UpdateMods(event);
 
+    if (IComponent::componentWithKeyboardFocus != nullptr)
+    {
+        IComponent::componentWithKeyboardFocus->handleKeyDown(event, _inputState);
+
+        return;
+    }
+
     for (auto &componentPtr : _components)
     {
         if (auto component = componentPtr.lock())
@@ -129,11 +136,18 @@ void ShaderEditOverlay::handleKeyUp(
 {
     UpdateMods(event);
 
+    if (IComponent::componentWithKeyboardFocus != nullptr)
+    {
+        IComponent::componentWithKeyboardFocus->handleKeyUp(event, _inputState);
+
+        return;
+    }
+
     for (auto &componentPtr : _components)
     {
         if (auto component = componentPtr.lock())
         {
-            if (component->handleKeyDown(event, _inputState)) return;
+            if (component->handleKeyUp(event, _inputState)) return;
         }
     }
 }
@@ -141,6 +155,13 @@ void ShaderEditOverlay::handleKeyUp(
 void ShaderEditOverlay::handleTextInput(
     SDL_TextInputEvent &event)
 {
+    if (IComponent::componentWithKeyboardFocus != nullptr)
+    {
+        IComponent::componentWithKeyboardFocus->handleTextInput(event, _inputState);
+
+        return;
+    }
+
     auto &editor = _editors->ActiveEditor();
 
     if (editor != nullptr)
