@@ -60,9 +60,7 @@ void ShaderEditOverlay::initialise(int w, int h)
 
     if (editor != nullptr)
     {
-        editor->loadFile("C:/Code/small-apps/ScintillaGL/Demo/ShaderEditOverlay.cpp");
-        editor->loadFile("C:/Code/small-apps/ScintillaGL/Demo/font-utils.hpp");
-        editor->loadFile("C:/Code/small-apps/ScintillaGL/Demo/screen-utils.hpp");
+        editor->newTab(true);
     }
 }
 

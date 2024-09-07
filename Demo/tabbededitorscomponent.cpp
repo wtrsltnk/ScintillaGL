@@ -29,8 +29,18 @@ bool TabbedEditorsComponent::init(const glm::vec2 &origin)
     return true;
 }
 
-void TabbedEditorsComponent::loadFile(const std::string &fileName)
+void TabbedEditorsComponent::loadFile(
+    const std::filesystem::path &fileName)
 {
+    for (size_t i = 0; i < tabs.size(); i++)
+    {
+        if (tabs[i]->openFile == fileName)
+        {
+            _activeTab = i;
+            return;
+        }
+    }
+
     std::stringstream buffer;
 
     std::ifstream t(fileName.c_str());
@@ -40,7 +50,8 @@ void TabbedEditorsComponent::loadFile(const std::string &fileName)
     editorLayer->init(glm::vec2(_origin.x, _origin.y + tabBarHeight));
     editorLayer->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
 
-    editorLayer->title = std::filesystem::path(fileName).filename().generic_string();
+    editorLayer->openFile = std::filesystem::path(fileName);
+    editorLayer->title = editorLayer->openFile.filename().generic_string();
     editorLayer->loadContent(buffer.str());
     _activeTab = tabs.size();
     tabs.push_back(std::move(editorLayer));
@@ -59,6 +70,17 @@ void TabbedEditorsComponent::newTab(
     if (switchTo)
     {
         _activeTab = tabs.size() - 1;
+    }
+}
+
+void TabbedEditorsComponent::closeTab(
+    size_t index)
+{
+    tabs.erase(std::next(tabs.begin(), index));
+
+    if (_activeTab >= index)
+    {
+        _activeTab--;
     }
 }
 
@@ -356,12 +378,7 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
                 }
                 else if (event.button == SDL_BUTTON_MIDDLE)
                 {
-                    tabs.erase(std::next(tabs.begin(), i));
-
-                    if (_activeTab >= i)
-                    {
-                        _activeTab--;
-                    }
+                    closeTab(i);
                     return true;
                 }
             }
@@ -395,8 +412,6 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
 
             for (auto &folder : folders)
             {
-                float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
-
                 auto text = folder.string();
 
                 scr::Rectangle rect = GetBorderRectangleForFile(text, x, y);

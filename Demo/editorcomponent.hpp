@@ -4,6 +4,7 @@
 #include "icomponent.hpp"
 #include "scrollbarcomponent.hpp"
 #include <glm/glm.hpp>
+#include <filesystem>F
 
 #include "EditorEx.hpp"
 
@@ -28,6 +29,8 @@ public:
     void loadContent(const std::string &content);
 
     void tick(){mMainEditor.Tick();}
+
+    std::filesystem::path openFile;
     std::string title;
 
 private:

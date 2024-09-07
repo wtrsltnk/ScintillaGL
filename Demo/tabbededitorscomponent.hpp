@@ -6,6 +6,7 @@
 #include "screen-utils.hpp"
 #include <memory>
 #include <vector>
+#include <filesystem>
 
 class TabbedEditorsComponent : public IComponent
 {
@@ -29,10 +30,13 @@ public:
     struct scr::Margin tabItemMargin;
 
     void loadFile(
-        const std::string &fileName);
+        const std::filesystem::path &fileName);
 
     void newTab(
         bool switchTo = true);
+
+    void closeTab(
+        size_t index);
 
     std::shared_ptr<IComponent> switchedFrom;
     std::vector<std::shared_ptr<EditorComponent>> tabs;
