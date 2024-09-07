@@ -34,6 +34,7 @@ public:
     void newTab(
         bool switchTo = true);
 
+    std::shared_ptr<IComponent> switchedFrom;
     std::vector<std::shared_ptr<EditorComponent>> tabs;
 private:
     std::unique_ptr<Font> &_font;
@@ -42,6 +43,11 @@ private:
     int _draggingStartX = 0;
 
     scr::Rectangle GetBorderRectangle(
+        const std::string &text,
+        float &x,
+        float &y);
+
+    scr::Rectangle GetBorderRectangleForFile(
         const std::string &text,
         float &x,
         float &y);

@@ -1,6 +1,7 @@
 
 #include "tabbededitorscomponent.hpp"
 
+#include "filesystemservice.hpp"
 #include "font-utils.hpp"
 #include <filesystem>
 #include <fstream>
@@ -8,6 +9,7 @@
 #include <sstream>
 
 const int tabBarHeight = 45;
+const int browserItemHeight = 30;
 
 TabbedEditorsComponent::TabbedEditorsComponent(std::unique_ptr<Font> &font)
     : _font(font)
@@ -40,6 +42,7 @@ void TabbedEditorsComponent::loadFile(const std::string &fileName)
 
     editorLayer->title = std::filesystem::path(fileName).filename().generic_string();
     editorLayer->loadContent(buffer.str());
+    _activeTab = tabs.size();
     tabs.push_back(std::move(editorLayer));
 }
 
@@ -119,43 +122,6 @@ void TabbedEditorsComponent::render(
     glVertex2f(_origin.x, _origin.y + tabBarHeight - border);
     glEnd();
 
-    if (IComponent::componentWithKeyboardFocus.get() == this && !tabs.empty())
-    {
-        tabs[_activeTab]->tick();
-    }
-
-    scr::Rectangle activeTabRect;
-
-    for (const auto &tab : tabs)
-    {
-        auto title = tab->title;
-        if (title.empty())
-        {
-            title = "unnamed";
-        }
-
-        bool isActiveTab = tabs[_activeTab] == tab;
-
-        auto border = RenderTab(inputState, tab->title, x, y, isActiveTab);
-
-        if (isActiveTab)
-        {
-            activeTabRect = border;
-        }
-    }
-
-    RenderTab(inputState, " + ", x, y, false);
-
-    glBegin(GL_LINE_STRIP);
-    glColor4f(0.1f, 0.1f, 0.1f, 1.0f);
-    glVertex2f(_origin.x, _origin.y + tabBarHeight - border);
-    glVertex2f(activeTabRect.left, _origin.y + tabBarHeight - border);
-    glVertex2f(activeTabRect.left, activeTabRect.top);
-    glVertex2f(activeTabRect.right, activeTabRect.top);
-    glVertex2f(activeTabRect.right, _origin.y + tabBarHeight - border);
-    glVertex2f(_origin.x + _width, _origin.y + tabBarHeight - border);
-    glEnd();
-
     glBegin(GL_QUADS);
     glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
     glVertex2f(_origin.x, _origin.y + tabBarHeight - border);
@@ -164,9 +130,110 @@ void TabbedEditorsComponent::render(
     glVertex2f(_origin.x, _origin.y + _height);
     glEnd();
 
-    if (!tabs.empty() && tabs.size() > _activeTab)
+    if (!tabs.empty())
     {
-        tabs[_activeTab]->render(inputState);
+        if (IComponent::componentWithKeyboardFocus.get() == this)
+        {
+            tabs[_activeTab]->tick();
+        }
+
+        scr::Rectangle activeTabRect;
+
+        for (const auto &tab : tabs)
+        {
+            auto title = tab->title;
+            if (title.empty())
+            {
+                title = "unnamed";
+            }
+
+            bool isActiveTab = tabs[_activeTab] == tab;
+
+            auto border = RenderTab(inputState, tab->title, x, y, isActiveTab);
+
+            if (isActiveTab)
+            {
+                activeTabRect = border;
+            }
+        }
+
+        RenderTab(inputState, " + ", x, y, false);
+
+        glBegin(GL_LINE_STRIP);
+        glColor4f(0.1f, 0.1f, 0.1f, 1.0f);
+        glVertex2f(_origin.x, _origin.y + tabBarHeight - border);
+        glVertex2f(activeTabRect.left, _origin.y + tabBarHeight - border);
+        glVertex2f(activeTabRect.left, activeTabRect.top);
+        glVertex2f(activeTabRect.right, activeTabRect.top);
+        glVertex2f(activeTabRect.right, _origin.y + tabBarHeight - border);
+        glVertex2f(_origin.x + _width, _origin.y + tabBarHeight - border);
+        glEnd();
+
+        if (!tabs.empty() && tabs.size() > _activeTab)
+        {
+            tabs[_activeTab]->render(inputState);
+        }
+    }
+    else
+    {
+        auto folders = FileSystem.GetFolders(".");
+        auto files = FileSystem.GetFiles(".");
+
+        float x = _origin.x;
+        float y = _origin.y;
+
+        RenderTab(inputState, " + ", x, y, false);
+
+        x = _origin.x;
+        y = _origin.y + tabBarHeight;
+
+        for (auto &folder : folders)
+        {
+            float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
+            float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
+
+            auto text = "+ " + folder.string();
+
+            scr::Rectangle border = GetBorderRectangleForFile(text, x, y);
+
+            auto hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
+
+            glBegin(GL_QUADS);
+            glColor4f(0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f);
+            glVertex2f(border.left, border.top);
+            glVertex2f(border.right, border.top);
+            glVertex2f(border.right, border.bottom);
+            glVertex2f(border.left, border.bottom);
+            glEnd();
+
+            DrawTextBase(_font, xbase, ybase + 20.0f, text.c_str(), text.size(), textFore);
+
+            y = border.bottom;
+        }
+
+        for (auto &file : files)
+        {
+            float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
+            float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
+
+            auto text = " " + file.string();
+
+            scr::Rectangle border = GetBorderRectangleForFile(text, x, y);
+
+            auto hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
+
+            glBegin(GL_QUADS);
+            glColor4f(0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f);
+            glVertex2f(border.left, border.top);
+            glVertex2f(border.right, border.top);
+            glVertex2f(border.right, border.bottom);
+            glVertex2f(border.left, border.bottom);
+            glEnd();
+
+            DrawTextBase(_font, xbase, ybase + 20.0f, text.c_str(), text.size(), textFore);
+
+            y = border.bottom;
+        }
     }
 }
 
@@ -291,7 +358,7 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
                 {
                     tabs.erase(std::next(tabs.begin(), i));
 
-                    if (_activeTab == i)
+                    if (_activeTab >= i)
                     {
                         _activeTab--;
                     }
@@ -311,6 +378,67 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
             newTab();
 
             return true;
+        }
+
+        if (tabs.empty())
+        {
+            auto folders = FileSystem.GetFolders(".");
+            auto files = FileSystem.GetFiles(".");
+
+            float x = _origin.x;
+            float y = _origin.y;
+
+            RenderTab(inputState, " + ", x, y, false);
+
+            x = _origin.x;
+            y = _origin.y + tabBarHeight;
+
+            for (auto &folder : folders)
+            {
+                float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
+
+                auto text = folder.string();
+
+                scr::Rectangle rect = GetBorderRectangleForFile(text, x, y);
+
+                if (rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
+                {
+                    std::cout << text << std::endl;
+                }
+
+                y = rect.bottom;
+            }
+
+            for (auto &file : files)
+            {
+                auto text = file.string();
+
+                scr::Rectangle rect = GetBorderRectangleForFile(text, x, y);
+
+                if (rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
+                {
+                    auto fullPath = FileSystem.GetFullPath(text);
+
+                    if (switchedFrom != nullptr)
+                    {
+                        auto switchedFromEditor = dynamic_cast<TabbedEditorsComponent *>(switchedFrom.get());
+                        if (switchedFromEditor != nullptr)
+                        {
+                            switchedFromEditor->loadFile(fullPath.generic_string());
+                        }
+                        else
+                        {
+                            loadFile(fullPath.generic_string());
+                        }
+                    }
+                    else
+                    {
+                        loadFile(fullPath.generic_string());
+                    }
+                }
+
+                y = rect.bottom;
+            }
         }
     }
 
@@ -365,6 +493,21 @@ bool TabbedEditorsComponent::handleMouseWheel(
     }
 
     return false;
+}
+
+scr::Rectangle TabbedEditorsComponent::GetBorderRectangleForFile(
+    const std::string &text,
+    float &x,
+    float &y)
+{
+    scr::Rectangle rect;
+
+    rect.top = y + tabItemMargin.Top;
+    rect.left = _origin.x;
+    rect.right = _origin.x + _width;
+    rect.bottom = rect.top + browserItemHeight;
+
+    return rect;
 }
 
 scr::Rectangle TabbedEditorsComponent::GetBorderRectangle(

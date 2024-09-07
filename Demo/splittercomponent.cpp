@@ -39,6 +39,8 @@ bool SplitterComponent::init(
         }
 
         _editor->init(_origin);
+
+        IComponent::componentWithKeyboardFocus = _editor;
     }
 
     resize(_origin.x, _origin.y, _width, _height);
@@ -240,7 +242,7 @@ std::shared_ptr<TabbedEditorsComponent> &SplitterComponent::ActiveEditor()
         return _editor;
     }
 
-    return _panel1->ActiveEditor();
+    return _panel2->ActiveEditor();
 }
 
 bool SplitterComponent::handleKeyDown(
@@ -309,6 +311,10 @@ bool SplitterComponent::handleMouseButtonInput(
         {
             if (_editor->isHit(glm::vec2(event.x, event.y)))
             {
+                if (IComponent::componentWithKeyboardFocus != nullptr && IComponent::componentWithKeyboardFocus != _editor)
+                {
+                    _editor->switchedFrom = IComponent::componentWithKeyboardFocus;
+                }
                 IComponent::componentWithKeyboardFocus = _editor;
             }
         }
@@ -316,11 +322,25 @@ bool SplitterComponent::handleMouseButtonInput(
         {
             if (_panel1->isHit(glm::vec2(event.x, event.y)))
             {
-                IComponent::componentWithKeyboardFocus = _panel1->ActiveEditor();
+                auto editor = _panel1->ActiveEditor();
+
+                if (IComponent::componentWithKeyboardFocus != nullptr && IComponent::componentWithKeyboardFocus != editor)
+                {
+                    editor->switchedFrom = IComponent::componentWithKeyboardFocus;
+                }
+
+                IComponent::componentWithKeyboardFocus = editor;
             }
             else if (_panel2->isHit(glm::vec2(event.x, event.y)))
             {
-                IComponent::componentWithKeyboardFocus = _panel2->ActiveEditor();
+                auto editor = _panel2->ActiveEditor();
+
+                if (IComponent::componentWithKeyboardFocus != nullptr && IComponent::componentWithKeyboardFocus != editor)
+                {
+                    editor->switchedFrom = IComponent::componentWithKeyboardFocus;
+                }
+
+                IComponent::componentWithKeyboardFocus = editor;
             }
         }
 

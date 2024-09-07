@@ -3,9 +3,11 @@
 
 #include "Scintilla.h"
 #include "ShaderEditOverlay.hpp"
+#include "filesystemservice.hpp"
 #include <SDL.h>
 #include <SDL_syswm.h>
 #include <iostream>
+#include <shellapi.h>
 #include <stdio.h>
 
 static ShaderEditOverlay app;
@@ -20,8 +22,28 @@ int WINAPI WinMain(
     HINSTANCE hPrevInstance,
     PSTR lpCmdLine,
     int nCmdShow)
-
 {
+    (void)hInstance;
+    (void)hPrevInstance;
+    (void)lpCmdLine;
+    (void)nCmdShow;
+
+    LPWSTR *szArglist;
+    int nArgs;
+    szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
+
+    for (int i = 0; i < nArgs; i++)
+        printf("%d: %ws\n", i, szArglist[i]);
+
+    std::filesystem::path root = std::filesystem::current_path();
+
+    if (nArgs > 1)
+    {
+        root = szArglist[1];
+    }
+
+    FileSystem.SetRoot(root);
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) // Init The SDL Library, The VIDEO Subsystem
     {
         return 0; // Get Out Of Here. Sorry.

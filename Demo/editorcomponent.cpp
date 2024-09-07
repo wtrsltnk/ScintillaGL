@@ -520,7 +520,6 @@ void EditorComponent::initialiseShaderEditor()
     mMainEditor.Command(SCI_SETCARETLINEBACKALPHA, 0x0);
 
     mMainEditor.Command(SCI_SETMARGINWIDTHN, 0, _fontSize * 4);  // Calculate correct width
-    mMainEditor.Command(SCI_SETMARGINWIDTHN, 1, 40);             // Calculate correct width
     mMainEditor.Command(SCI_SETMARGINMASKN, 1, SC_MASK_FOLDERS); // Calculate correct width
 
     for (size_t i = 0; i < NB_FOLDER_STATE; i++)
