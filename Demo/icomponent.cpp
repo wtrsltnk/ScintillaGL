@@ -6,12 +6,7 @@ std::shared_ptr<IComponent> IComponent::componentWithKeyboardFocus = nullptr;
 bool IComponent::isHit(
     const glm::vec2 &p)
 {
-    if (p.x >= _origin.x && p.y >= _origin.y && p.x <= (_origin.x + _width) && p.y <= (_origin.y + _height))
-    {
-        return true;
-    }
-
-    return false;
+    return p.x >= _origin.x && p.y >= _origin.y && p.x <= (_origin.x + _width) && p.y <= (_origin.y + _height);
 }
 
 int IComponent::width()

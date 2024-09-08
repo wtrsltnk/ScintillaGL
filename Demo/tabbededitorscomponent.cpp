@@ -11,12 +11,16 @@
 const int tabBarHeight = 45;
 const int browserItemHeight = 30;
 
-TabbedEditorsComponent::TabbedEditorsComponent(std::unique_ptr<Font> &font)
+glm::vec4 textFore = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+TabbedEditorsComponent::TabbedEditorsComponent(
+    std::unique_ptr<Font> &font)
     : _font(font)
 {
 }
 
-bool TabbedEditorsComponent::init(const glm::vec2 &origin)
+bool TabbedEditorsComponent::init(
+    const glm::vec2 &origin)
 {
     _origin = origin;
 
@@ -25,6 +29,25 @@ bool TabbedEditorsComponent::init(const glm::vec2 &origin)
 
     tabItemPadding.Bottom = tabItemPadding.Top = 2;
     tabItemPadding.Left = tabItemPadding.Right = 10;
+
+    _browserScrollBarFrom = std::make_shared<ScrollBarComponent>();
+    _browserScrollBarFrom->init(glm::vec2(_origin.x, _origin.y + tabBarHeight));
+
+    _browserScrollBarFrom->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
+
+    _browserScrollBarFrom->onScrollY = [&](int diff) {
+        auto a = (_totalBrowserLines / float(_height - tabBarHeight));
+
+        std::cout << "diff=" << diff << std::endl;
+        std::cout << "a   =" << a << std::endl;
+        auto amount = float(diff * a);
+
+        ScrollY(amount);
+    };
+    _browserScrollBarFrom->getScrollInfo = [&](float &start, float &length) {
+        start = _browserTopLine / float(_totalBrowserLines);
+        length = (float(_height - tabBarHeight) / float(browserItemHeight + tabItemMargin.Top + tabItemMargin.Bottom)) / float(_totalBrowserLines);
+    };
 
     return true;
 }
@@ -76,6 +99,11 @@ void TabbedEditorsComponent::newTab(
 void TabbedEditorsComponent::closeTab(
     size_t index)
 {
+    if (tabs.empty())
+    {
+        return;
+    }
+
     tabs.erase(std::next(tabs.begin(), index));
 
     if (_activeTab >= index)
@@ -83,8 +111,6 @@ void TabbedEditorsComponent::closeTab(
         _activeTab--;
     }
 }
-
-glm::vec4 textFore = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 scr::Rectangle TabbedEditorsComponent::RenderTab(
     const struct InputState &inputState,
@@ -207,13 +233,10 @@ void TabbedEditorsComponent::render(
         RenderTab(inputState, " + ", x, y, false);
 
         x = _origin.x;
-        y = _origin.y + tabBarHeight;
+        y = _origin.y + tabBarHeight - (_browserTopLine * browserItemHeight);
 
         if (!_relativePathToOpenFolder.empty())
         {
-            float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
-            float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
-
             auto text = "< " + _relativePathToOpenFolder.string();
 
             scr::Rectangle border = GetBorderRectangleForFile(text, x, y);
@@ -228,9 +251,11 @@ void TabbedEditorsComponent::render(
             glVertex2f(border.left, border.bottom);
             glEnd();
 
+            float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
+            float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
             DrawTextBase(_font, xbase, ybase + 20.0f, text.c_str(), text.size(), textFore);
 
-            y = border.bottom;
+            y = border.bottom + tabItemMargin.Bottom;
         }
 
         for (auto &folder : folders)
@@ -280,10 +305,18 @@ void TabbedEditorsComponent::render(
 
             y = border.bottom;
         }
+
+        _totalBrowserLines = 1 + (files.size() + folders.size());
+
+        _browserScrollBarFrom->render(inputState);
     }
 }
 
-void TabbedEditorsComponent::resize(int x, int y, int w, int h)
+void TabbedEditorsComponent::resize(
+    int x,
+    int y,
+    int w,
+    int h)
 {
     _width = w;
     _height = h;
@@ -305,6 +338,8 @@ void TabbedEditorsComponent::resize(int x, int y, int w, int h)
     {
         y = _origin.y;
     }
+
+    _browserScrollBarFrom->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
 
     for (const auto &tab : tabs)
     {
@@ -328,6 +363,14 @@ bool TabbedEditorsComponent::handleKeyDown(
 
                 return true;
             }
+        case SDLK_F4:
+        {
+            if (inputState.ctrl)
+            {
+                closeTab(_activeTab);
+            }
+            break;
+        }
     }
 
     if (!tabs.empty() && tabs.size() > _activeTab)
@@ -375,7 +418,7 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
     (void)event;
     (void)inputState;
 
-    if (event.x < _origin.x || event.x > _origin.x + _width || event.y < _origin.y || event.y > _origin.y + _height)
+    if (!isHit(glm::vec2(event.x, event.y)))
     {
         return false;
     }
@@ -423,6 +466,12 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
 
         if (tabs.empty())
         {
+            if (_browserScrollBarFrom->handleMouseButtonInput(event, inputState))
+            {
+                std::cout << "bowser scrollbar Down" << std::endl;
+                return true;
+            }
+
             auto folders = FileSystem.GetFolders(_relativePathToOpenFolder);
             auto files = FileSystem.GetFiles(_relativePathToOpenFolder);
 
@@ -503,6 +552,12 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
 
     if (event.type == SDL_MOUSEBUTTONUP)
     {
+        if (_browserScrollBarFrom->handleMouseButtonInput(event, inputState))
+        {
+            std::cout << "bowser scrollbar Up" << std::endl;
+            return true;
+        }
+
         _draggingTab = false;
     }
 
@@ -521,12 +576,20 @@ bool TabbedEditorsComponent::handleMouseMotionInput(
     (void)event;
     (void)inputState;
 
+    if (tabs.empty())
+    {
+        if (_browserScrollBarFrom->handleMouseMotionInput(event, inputState))
+        {
+            return true;
+        }
+    }
+
     if (inputState.leftMouseDown && _draggingTab)
     {
         return true;
     }
 
-    if (event.x < _origin.x || event.x > _origin.x + _width || event.y < _origin.y || event.y > _origin.y + _height)
+    if (!isHit(glm::vec2(inputState.mouseX, inputState.mouseY)))
     {
         return false;
     }
@@ -546,12 +609,43 @@ bool TabbedEditorsComponent::handleMouseWheel(
     (void)event;
     (void)inputState;
 
+    if (!isHit(glm::vec2(inputState.mouseX, inputState.mouseY)))
+    {
+        return false;
+    }
+
+    if (tabs.empty())
+    {
+        if (_browserScrollBarFrom->handleMouseWheel(event, inputState))
+        {
+            return true;
+        }
+
+        ScrollY((event.y / glm::abs(event.y)) * 10);
+    }
+
     if (!tabs.empty() && tabs.size() > _activeTab)
     {
         return tabs[_activeTab]->handleMouseWheel(event, inputState);
     }
 
     return false;
+}
+
+void TabbedEditorsComponent::ScrollY(
+    float amount)
+{
+    _browserTopLine -= amount;
+
+    if (_browserTopLine < 0)
+    {
+        _browserTopLine = 0;
+    }
+
+    if (_browserTopLine >= _totalBrowserLines)
+    {
+        _browserTopLine = _totalBrowserLines;
+    }
 }
 
 scr::Rectangle TabbedEditorsComponent::GetBorderRectangleForFile(
@@ -564,7 +658,7 @@ scr::Rectangle TabbedEditorsComponent::GetBorderRectangleForFile(
     rect.top = y + tabItemMargin.Top;
     rect.left = _origin.x;
     rect.right = _origin.x + _width;
-    rect.bottom = rect.top + browserItemHeight;
+    rect.bottom = rect.top + browserItemHeight + tabItemPadding.Top + tabItemPadding.Bottom;
 
     return rect;
 }
@@ -583,7 +677,7 @@ scr::Rectangle TabbedEditorsComponent::GetBorderRectangle(
     scr::Rectangle border;
 
     border.top = y + tabItemMargin.Top;
-    border.bottom = border.top + tabBarHeight;
+    border.bottom = border.top + tabBarHeight + tabItemMargin.Bottom;
     border.left = x + tabItemMargin.Left;
 
     border.right = nextx;

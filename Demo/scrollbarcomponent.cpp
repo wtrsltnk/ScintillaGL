@@ -1,7 +1,9 @@
 
 #include "scrollbarcomponent.hpp"
 
+#include "screen-utils.hpp"
 #include <glad/glad.h>
+#include <iostream>
 
 bool ScrollBarComponent::init(
     const glm::vec2 &origin)
@@ -113,6 +115,11 @@ bool ScrollBarComponent::handleMouseMotionInput(
     const struct InputState &inputState)
 {
     (void)inputState;
+
+    if (_scrolling && !inputState.leftMouseDown)
+    {
+        _scrolling = false;
+    }
 
     if (_scrolling)
     {

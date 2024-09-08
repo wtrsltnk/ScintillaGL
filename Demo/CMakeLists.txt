@@ -2,7 +2,7 @@
 
 project(Demo VERSION "0.1.0")
 
-add_executable(Demo WIN32)
+add_executable(Demo)
 
 target_sources(Demo
     PRIVATE

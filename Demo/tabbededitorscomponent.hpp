@@ -4,9 +4,9 @@
 #include "editorcomponent.hpp"
 #include "icomponent.hpp"
 #include "screen-utils.hpp"
+#include <filesystem>
 #include <memory>
 #include <vector>
-#include <filesystem>
 
 class TabbedEditorsComponent : public IComponent
 {
@@ -40,12 +40,19 @@ public:
 
     std::shared_ptr<IComponent> switchedFrom;
     std::vector<std::shared_ptr<EditorComponent>> tabs;
+
 private:
     std::unique_ptr<Font> &_font;
     size_t _activeTab = 0;
     std::filesystem::path _relativePathToOpenFolder = "";
     bool _draggingTab = false;
     int _draggingStartX = 0;
+    std::shared_ptr<ScrollBarComponent> _browserScrollBarFrom;
+    float _totalBrowserLines = 0;
+    float _browserTopLine = 0;
+
+    void ScrollY(
+        float amount);
 
     scr::Rectangle GetBorderRectangle(
         const std::string &text,

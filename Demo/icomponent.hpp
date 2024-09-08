@@ -41,8 +41,8 @@ public:
         const glm::vec2 &p);
 
 protected:
-    int _width = 0.0f;
-    int _height = 0.0f;
+    int _width = 0;
+    int _height = 0;
     glm::vec2 _origin;
 };
 

@@ -36,7 +36,7 @@ private:
 
     std::vector<LocalMenuItem> _menuItems;
 
-    int menuHeight = 30;
+    float menuHeight = 30.0f;
     struct scr::Padding menuItemPadding;
     struct scr::Margin menuItemMargin;
     scr::Direction _direction = scr::Direction::Horizontal;

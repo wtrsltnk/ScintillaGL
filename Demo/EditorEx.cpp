@@ -2,7 +2,7 @@
 #include "EditorEx.hpp"
 
 void EditorEx::Resize(int x, int y, int w, int h)
-{//clientRect = PRectangle(x, y, w, h);
+{ // clientRect = PRectangle(x, y, w, h);
     SetSize(w, h);
     ContainerNeedsUpdate(SC_UPDATE_H_SCROLL);
     InvalidateStyleRedraw();
@@ -25,9 +25,9 @@ void EditorEx::GetScrollBar(float &start, float &length)
 
 void EditorEx::Scroll(int diff, int height)
 {
-    auto a = (pdoc->LinesTotal() / (float)height);
+    auto a = (pdoc->LinesTotal() / float(height));
 
-    auto amount = (int)(diff * a);
+    auto amount = int(diff * a);
 
     if (amount == 0)
     {

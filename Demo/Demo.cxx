@@ -8,6 +8,7 @@
 #include <SDL_syswm.h>
 #include <iostream>
 #include <shellapi.h>
+#include <sstream>
 #include <stdio.h>
 
 static ShaderEditOverlay app;
@@ -17,29 +18,15 @@ void Platform_Finalise();
 
 int w = 1024, h = 768;
 
-int WINAPI WinMain(
-    HINSTANCE hInstance,
-    HINSTANCE hPrevInstance,
-    PSTR lpCmdLine,
-    int nCmdShow)
+int main(
+    int argc,
+    char* argv[])
 {
-    (void)hInstance;
-    (void)hPrevInstance;
-    (void)lpCmdLine;
-    (void)nCmdShow;
-
-    LPWSTR *szArglist;
-    int nArgs;
-    szArglist = CommandLineToArgvW(GetCommandLineW(), &nArgs);
-
-    for (int i = 0; i < nArgs; i++)
-        printf("%d: %ws\n", i, szArglist[i]);
-
     std::filesystem::path root = std::filesystem::current_path();
 
-    if (nArgs > 1)
+    if (argc > 1)
     {
-        root = szArglist[1];
+        root = argv[1];
     }
 
     FileSystem.SetRoot(root);
@@ -49,7 +36,11 @@ int WINAPI WinMain(
         return 0; // Get Out Of Here. Sorry.
     }
 
-    auto window = SDL_CreateWindow("ScintillaGL", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    std::stringstream ss;
+
+    ss << "ScintillaGL - " << root.string();
+
+    auto window = SDL_CreateWindow(ss.str().c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (window == 0)
     {
         std::cout << "Failed to create SDL2 window" << std::endl;

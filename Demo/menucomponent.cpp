@@ -173,33 +173,37 @@ void MenuComponent::render(const struct InputState &inputState)
     }
 }
 
-void MenuComponent::resize(int x, int y, int w, int h)
+void MenuComponent::resize(
+    int x,
+    int y,
+    int w,
+    int h)
 {
     _width = w;
     _height = h;
 
     if (x >= 0)
     {
-        _origin.x = (float)x;
+        _origin.x = float(x);
     }
     else
     {
-        x = _origin.x;
+        x = int(_origin.x);
     }
 
     if (y >= 0)
     {
-        _origin.y = (float)y;
+        _origin.y = float(y);
     }
     else
     {
-        y = _origin.y;
+        y = int(_origin.y);
     }
 
     menuHeight = menuRowHeight;
 
-    float tmpX = x;
-    float tmpY = y;
+    float tmpX = float(x);
+    float tmpY = float(y);
 
     for (const auto &menuItem : _menuItems)
     {
@@ -225,7 +229,7 @@ void MenuComponent::resize(int x, int y, int w, int h)
 
 int MenuComponent::height()
 {
-    return menuHeight;
+    return int(menuHeight);
 }
 
 bool MenuComponent::handleKeyDown(
