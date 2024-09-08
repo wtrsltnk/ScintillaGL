@@ -198,8 +198,8 @@ void TabbedEditorsComponent::render(
     }
     else
     {
-        auto folders = FileSystem.GetFolders(".");
-        auto files = FileSystem.GetFiles(".");
+        auto folders = FileSystem.GetFolders(_relativePathToOpenFolder);
+        auto files = FileSystem.GetFiles(_relativePathToOpenFolder);
 
         float x = _origin.x;
         float y = _origin.y;
@@ -209,12 +209,36 @@ void TabbedEditorsComponent::render(
         x = _origin.x;
         y = _origin.y + tabBarHeight;
 
+        if (!_relativePathToOpenFolder.empty())
+        {
+            float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
+            float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
+
+            auto text = "< " + _relativePathToOpenFolder.string();
+
+            scr::Rectangle border = GetBorderRectangleForFile(text, x, y);
+
+            auto hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
+
+            glBegin(GL_QUADS);
+            glColor4f(0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f);
+            glVertex2f(border.left, border.top);
+            glVertex2f(border.right, border.top);
+            glVertex2f(border.right, border.bottom);
+            glVertex2f(border.left, border.bottom);
+            glEnd();
+
+            DrawTextBase(_font, xbase, ybase + 20.0f, text.c_str(), text.size(), textFore);
+
+            y = border.bottom;
+        }
+
         for (auto &folder : folders)
         {
             float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
             float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
 
-            auto text = "+ " + folder.string();
+            auto text = "+ " + std::filesystem::relative(folder, _relativePathToOpenFolder).string();
 
             scr::Rectangle border = GetBorderRectangleForFile(text, x, y);
 
@@ -238,7 +262,7 @@ void TabbedEditorsComponent::render(
             float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
             float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
 
-            auto text = " " + file.string();
+            auto text = "  " + std::filesystem::relative(file, _relativePathToOpenFolder).string();
 
             scr::Rectangle border = GetBorderRectangleForFile(text, x, y);
 
@@ -399,8 +423,8 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
 
         if (tabs.empty())
         {
-            auto folders = FileSystem.GetFolders(".");
-            auto files = FileSystem.GetFiles(".");
+            auto folders = FileSystem.GetFolders(_relativePathToOpenFolder);
+            auto files = FileSystem.GetFiles(_relativePathToOpenFolder);
 
             float x = _origin.x;
             float y = _origin.y;
@@ -410,6 +434,22 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
             x = _origin.x;
             y = _origin.y + tabBarHeight;
 
+            if (!_relativePathToOpenFolder.empty())
+            {
+                auto text = "< " + _relativePathToOpenFolder.string();
+
+                scr::Rectangle rect = GetBorderRectangleForFile(text, x, y);
+
+                if (rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
+                {
+                    _relativePathToOpenFolder = _relativePathToOpenFolder.parent_path();
+
+                    return true;
+                }
+
+                y = rect.bottom;
+            }
+
             for (auto &folder : folders)
             {
                 auto text = folder.string();
@@ -418,7 +458,9 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
 
                 if (rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
                 {
-                    std::cout << text << std::endl;
+                    _relativePathToOpenFolder = folder;
+
+                    return true;
                 }
 
                 y = rect.bottom;
@@ -450,6 +492,8 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
                     {
                         loadFile(fullPath.generic_string());
                     }
+
+                    return true;
                 }
 
                 y = rect.bottom;

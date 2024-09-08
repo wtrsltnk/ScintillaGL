@@ -43,6 +43,7 @@ public:
 private:
     std::unique_ptr<Font> &_font;
     size_t _activeTab = 0;
+    std::filesystem::path _relativePathToOpenFolder = "";
     bool _draggingTab = false;
     int _draggingStartX = 0;
 
