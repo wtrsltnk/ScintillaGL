@@ -26,6 +26,11 @@ void ScrollBarComponent::render(
         getScrollInfo(start, length);
     }
 
+    if (length >= 1.0f)
+    {
+        return;
+    }
+
     glDisable(GL_TEXTURE_2D);
 
     glEnable(GL_BLEND);

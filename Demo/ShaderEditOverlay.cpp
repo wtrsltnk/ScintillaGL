@@ -52,7 +52,7 @@ void ShaderEditOverlay::initialise(int w, int h)
 
     _editors = std::make_shared<SplitterComponent>(localFont);
     _components.push_back(_editors);
-    _editors->init(glm::vec2(0.0f, _menu->height()), 0.4f, true);
+    _editors->init(glm::vec2(0.0f, _menu->height()), 0.25f, true);
 
     resize(w, h);
 
