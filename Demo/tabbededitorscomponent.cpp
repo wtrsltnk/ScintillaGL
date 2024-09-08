@@ -37,11 +37,7 @@ bool TabbedEditorsComponent::init(
 
     _browserScrollBarFrom->onScrollY = [&](int diff) {
         auto a = (_totalBrowserLines / float(_height - tabBarHeight));
-
-        std::cout << "diff=" << diff << std::endl;
-        std::cout << "a   =" << a << std::endl;
         auto amount = float(diff * a);
-
         ScrollY(amount);
     };
     _browserScrollBarFrom->getScrollInfo = [&](float &start, float &length) {
@@ -235,6 +231,23 @@ void TabbedEditorsComponent::render(
         x = _origin.x;
         y = _origin.y + tabBarHeight - (_browserTopLine * browserItemHeight);
 
+        double plane[][4] = {
+            {1, 0, 0, -_origin.x},
+            {-1, 0, 0, _origin.x + _width},
+            {0, 1, 0, -(_origin.y + tabBarHeight)},
+            {0, -1, 0, _origin.y + _height},
+        };
+
+        glClipPlane(GL_CLIP_PLANE0, plane[0]);
+        glClipPlane(GL_CLIP_PLANE1, plane[1]);
+        glClipPlane(GL_CLIP_PLANE2, plane[2]);
+        glClipPlane(GL_CLIP_PLANE3, plane[3]);
+
+        glEnable(GL_CLIP_PLANE0);
+        glEnable(GL_CLIP_PLANE1);
+        glEnable(GL_CLIP_PLANE2);
+        glEnable(GL_CLIP_PLANE3);
+
         if (!_relativePathToOpenFolder.empty())
         {
             auto text = "< " + _relativePathToOpenFolder.string();
@@ -305,6 +318,11 @@ void TabbedEditorsComponent::render(
 
             y = border.bottom;
         }
+
+        glDisable(GL_CLIP_PLANE0);
+        glDisable(GL_CLIP_PLANE1);
+        glDisable(GL_CLIP_PLANE2);
+        glDisable(GL_CLIP_PLANE3);
 
         _totalBrowserLines = 1 + (files.size() + folders.size());
 
@@ -468,7 +486,6 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
         {
             if (_browserScrollBarFrom->handleMouseButtonInput(event, inputState))
             {
-                std::cout << "bowser scrollbar Down" << std::endl;
                 return true;
             }
 
@@ -481,7 +498,7 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
             RenderTab(inputState, " + ", x, y, false);
 
             x = _origin.x;
-            y = _origin.y + tabBarHeight;
+            y = _origin.y + tabBarHeight - (_browserTopLine * browserItemHeight);
 
             if (!_relativePathToOpenFolder.empty())
             {
@@ -554,7 +571,6 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
     {
         if (_browserScrollBarFrom->handleMouseButtonInput(event, inputState))
         {
-            std::cout << "bowser scrollbar Up" << std::endl;
             return true;
         }
 
@@ -576,14 +592,6 @@ bool TabbedEditorsComponent::handleMouseMotionInput(
     (void)event;
     (void)inputState;
 
-    if (tabs.empty())
-    {
-        if (_browserScrollBarFrom->handleMouseMotionInput(event, inputState))
-        {
-            return true;
-        }
-    }
-
     if (inputState.leftMouseDown && _draggingTab)
     {
         return true;
@@ -592,6 +600,14 @@ bool TabbedEditorsComponent::handleMouseMotionInput(
     if (!isHit(glm::vec2(inputState.mouseX, inputState.mouseY)))
     {
         return false;
+    }
+
+    if (tabs.empty())
+    {
+        if (_browserScrollBarFrom->handleMouseMotionInput(event, inputState))
+        {
+            return true;
+        }
     }
 
     if (!tabs.empty() && tabs.size() > _activeTab)
