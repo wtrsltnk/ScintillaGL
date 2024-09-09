@@ -115,41 +115,46 @@ void TabbedEditorsComponent::closeTab(
     }
 }
 
-scr::Rectangle TabbedEditorsComponent::RenderTab(
+void TabbedEditorsComponent::RenderTab(
     const struct InputState &inputState,
     const std::string &text,
     float &x,
     float &y,
     bool isActiveTab)
 {
-    float width = WidthText(_font, text.c_str(), text.size());
-
-    float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
-    float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
-
     auto border = GetBorderRectangle(text, x, y);
 
     bool hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
 
-    if (inputState.mouseX < _origin.x || inputState.mouseX > _origin.x + _width || inputState.mouseY < _origin.y || inputState.mouseY > _origin.y + _height)
+    if (!isHit(glm::vec2(inputState.mouseX, inputState.mouseY)))
     {
         hover = false;
+    }
+
+    auto dragAmount = inputState.mouseX - _draggingStartX;
+
+    if (!isActiveTab || !_draggingTab)
+    {
+        dragAmount = 0;
     }
 
     glBegin(GL_QUADS);
     glColor4f(0.2f, 0.2f, 0.2f, isActiveTab ? 1.0f : hover ? 0.6f
                                                            : 0.4f);
-    glVertex2f(border.left, border.top);
-    glVertex2f(border.right, border.top);
-    glVertex2f(border.right, border.bottom);
-    glVertex2f(border.left, border.bottom);
+    glVertex2f(border.left + dragAmount, border.top);
+    glVertex2f(border.right + dragAmount, border.top);
+    glVertex2f(border.right + dragAmount, border.bottom);
+    glVertex2f(border.left + dragAmount, border.bottom);
     glEnd();
 
-    DrawTextBase(_font, xbase, ybase + 20.0f, text.c_str(), text.size(), textFore);
+    DrawTextBase(
+        _font,
+        border.left + dragAmount + tabItemMargin.Left + tabItemPadding.Left,
+        border.top + tabItemMargin.Top + tabItemPadding.Top + 20.0f,
+        text,
+        textFore);
 
-    x = xbase + width + tabItemPadding.Right + tabItemMargin.Right;
-
-    return border;
+    x = border.right;
 }
 
 void TabbedEditorsComponent::render(
@@ -188,8 +193,6 @@ void TabbedEditorsComponent::render(
             tabs[_activeTab]->tick();
         }
 
-        scr::Rectangle activeTabRect;
-
         for (const auto &tab : tabs)
         {
             auto title = tab->title;
@@ -200,25 +203,8 @@ void TabbedEditorsComponent::render(
 
             bool isActiveTab = tabs[_activeTab] == tab;
 
-            auto border = RenderTab(inputState, tab->title, x, y, isActiveTab);
-
-            if (isActiveTab)
-            {
-                activeTabRect = border;
-            }
+            RenderTab(inputState, tab->title, x, y, isActiveTab);
         }
-
-        RenderTab(inputState, " + ", x, y, false);
-
-        glBegin(GL_LINE_STRIP);
-        glColor4f(0.1f, 0.1f, 0.1f, 1.0f);
-        glVertex2f(_origin.x, _origin.y + tabBarHeight - border);
-        glVertex2f(activeTabRect.left, _origin.y + tabBarHeight - border);
-        glVertex2f(activeTabRect.left, activeTabRect.top);
-        glVertex2f(activeTabRect.right, activeTabRect.top);
-        glVertex2f(activeTabRect.right, _origin.y + tabBarHeight - border);
-        glVertex2f(_origin.x + _width, _origin.y + tabBarHeight - border);
-        glEnd();
 
         if (!tabs.empty() && tabs.size() > _activeTab)
         {
@@ -400,17 +386,6 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
 
             x = border.right;
         }
-
-        auto plusBorder = GetBorderRectangle(" + ", x, y);
-
-        x = plusBorder.right;
-
-        if (plusBorder.Contains(glm::vec2(event.x, event.y)))
-        {
-            newTab();
-
-            return true;
-        }
     }
 
     if (event.type == SDL_MOUSEBUTTONUP)
@@ -490,19 +465,16 @@ scr::Rectangle TabbedEditorsComponent::GetBorderRectangle(
     float &x,
     float &y)
 {
-    float width = WidthText(_font, text.c_str(), text.size());
-
-    auto nextx = x + tabItemMargin.Left + tabItemPadding.Left  // Left margin and padding
-                 + width                                       // This is the text with
-                 + tabItemMargin.Right + tabItemPadding.Right; // Right marignand padding
+    float width = WidthText(_font, text);
 
     scr::Rectangle border;
 
     border.top = y + tabItemMargin.Top;
-    border.bottom = border.top + tabBarHeight + tabItemMargin.Bottom;
+    border.bottom = border.top + tabItemPadding.Top + tabBarHeight + tabItemPadding.Bottom + tabItemMargin.Bottom;
     border.left = x + tabItemMargin.Left;
-
-    border.right = nextx;
+    border.right = x + tabItemMargin.Left + tabItemPadding.Left  // Left margin and padding
+                   + width                                       // This is the text with
+                   + tabItemPadding.Right + tabItemMargin.Right; // Right padding and margin
 
     return border;
 }

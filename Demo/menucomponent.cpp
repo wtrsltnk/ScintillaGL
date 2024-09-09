@@ -13,8 +13,7 @@ void DrawTextBase(
     std::unique_ptr<Font> &font_,
     float xbase,
     float ybase,
-    const char *s,
-    size_t len,
+    const std::string &text,
     glm::vec4 fore)
 {
     stbtt_Font *realFont = (stbtt_Font *)font_->GetID();
@@ -26,6 +25,8 @@ void DrawTextBase(
     glColor4fv((GLfloat *)&fore);
     glBegin(GL_QUADS);
     float x = xbase, y = ybase;
+    const char *s = text.c_str();
+    int len = text.size();
     while (len--)
     {
         if (*s >= 32 && *s < 128)
@@ -51,9 +52,10 @@ void DrawTextBase(
 
 float WidthText(
     std::unique_ptr<Font> &font_,
-    const char *s,
-    size_t len)
+    const std::string &text)
 {
+    const char *s = text.c_str();
+    int len = text.size();
     stbtt_Font *realFont = (stbtt_Font *)font_->GetID();
     // TODO: implement proper UTF-8 handling
     float position = 0;
@@ -93,7 +95,7 @@ void MenuComponent::render(const struct InputState &inputState)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     const std::string subMenuPointer(">");
-    float subMenuPointerWidth = WidthText(_font, subMenuPointer.c_str(), subMenuPointer.size());
+    float subMenuPointerWidth = WidthText(_font, subMenuPointer);
 
     scr::Rectangle menuRect;
     menuRect.left = menuRect.right = _origin.x;
@@ -131,12 +133,12 @@ void MenuComponent::render(const struct InputState &inputState)
         glVertex2f(border.left, border.bottom);
         glEnd();
 
-        DrawTextBase(_font, xbase, ybase + 14.0f, menuItem.name.c_str(), menuItem.name.size(), menuItem.enabled ? textFore : textForeDisabled);
+        DrawTextBase(_font, xbase, ybase + 14.0f, menuItem.name, menuItem.enabled ? textFore : textForeDisabled);
 
         if (_direction == scr::Direction::Vertical && !menuItem.subMenu.empty())
         {
             xbase = border.right - menuItemMargin.Right - menuItemPadding.Right - subMenuPointerWidth;
-            DrawTextBase(_font, xbase, ybase + 14.0f, subMenuPointer.c_str(), subMenuPointer.size(), menuItem.enabled ? textFore : textForeDisabled);
+            DrawTextBase(_font, xbase, ybase + 14.0f, subMenuPointer, menuItem.enabled ? textFore : textForeDisabled);
         }
 
         if (_direction == scr::Direction::Horizontal)
@@ -417,7 +419,7 @@ scr::Rectangle MenuComponent::GetBorderRectangle(
     float &x,
     float &y)
 {
-    float width = WidthText(_font, menuItem.name.c_str(), menuItem.name.size());
+    float width = WidthText(_font, menuItem.name);
 
     auto nextx = x + menuItemMargin.Left + menuItemPadding.Left  // Left margin and padding
                  + width                                         // This is the text with

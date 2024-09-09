@@ -1,10 +1,10 @@
 #ifndef FILESYSTEMBROWSERCOMPONENT_H
 #define FILESYSTEMBROWSERCOMPONENT_H
 
-#include "font-utils.hpp"
 #include "icomponent.hpp"
 #include "screen-utils.hpp"
 #include "scrollbarcomponent.hpp"
+#include <Platform.h>
 #include <filesystem>
 #include <functional>
 #include <memory>
@@ -43,9 +43,16 @@ private:
         float amount);
 
     scr::Rectangle GetBorderRectangleForFile(
+        float &x,
+        float &y);
+
+    void RenderListItem(
+        const struct InputState &inputState,
         const std::string &text,
         float &x,
         float &y);
+
+    int ListItemsInView();
 };
 
 #endif // FILESYSTEMBROWSERCOMPONENT_H

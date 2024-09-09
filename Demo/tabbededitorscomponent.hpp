@@ -54,7 +54,7 @@ private:
         float &x,
         float &y);
 
-    scr::Rectangle RenderTab(
+    void RenderTab(
         const struct InputState &inputState,
         const std::string &text,
         float &x,

@@ -1,6 +1,7 @@
 #include "filesystembrowsercomponent.hpp"
 
 #include "filesystemservice.hpp"
+#include "font-utils.hpp"
 #include <glad/glad.h>
 
 const int browserItemHeight = 30;
@@ -24,7 +25,7 @@ bool FileSystemBrowserComponent::init(
     _browserScrollBarFrom = std::make_shared<ScrollBarComponent>();
     _browserScrollBarFrom->init(glm::vec2(_origin.x, _origin.y));
 
-    _browserScrollBarFrom->resize(_origin.x, _origin.y, _width, _height);
+    _browserScrollBarFrom->resize(int(_origin.x), int(_origin.y), _width, _height);
 
     _browserScrollBarFrom->onScrollY = [&](int diff) {
         auto a = (_totalBrowserLines / float(_height));
@@ -33,10 +34,38 @@ bool FileSystemBrowserComponent::init(
     };
     _browserScrollBarFrom->getScrollInfo = [&](float &start, float &length) {
         start = _browserTopLine / float(_totalBrowserLines);
-        length = (float(_height) / float(browserItemHeight + tabItemMargin.Top + tabItemMargin.Bottom)) / float(_totalBrowserLines);
+        length = ListItemsInView() / float(_totalBrowserLines);
     };
 
     return true;
+}
+
+void FileSystemBrowserComponent::RenderListItem(
+    const struct InputState &inputState,
+    const std::string &text,
+    float &x,
+    float &y)
+{
+    scr::Rectangle border = GetBorderRectangleForFile(x, y);
+
+    auto hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
+
+    glBegin(GL_QUADS);
+    glColor4f(0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f);
+    glVertex2f(border.left, border.top);
+    glVertex2f(border.right, border.top);
+    glVertex2f(border.right, border.bottom);
+    glVertex2f(border.left, border.bottom);
+    glEnd();
+
+    DrawTextBase(
+        _font,
+        border.left + tabItemPadding.Left,
+        border.top + tabItemPadding.Top + 20.0f,
+        text,
+        textFore);
+
+    y = border.bottom + tabItemMargin.Bottom;
 }
 
 void FileSystemBrowserComponent::render(
@@ -69,7 +98,7 @@ void FileSystemBrowserComponent::render(
     auto files = FileSystem.GetFiles(_relativePathToOpenFolder);
 
     float x = _origin.x;
-    float y = _origin.y - (_browserTopLine * browserItemHeight);
+    float y = _origin.y - (_browserTopLine * (tabItemMargin.Top + browserItemHeight + tabItemMargin.Bottom));
 
     double plane[][4] = {
         {1, 0, 0, -_origin.x},
@@ -88,83 +117,39 @@ void FileSystemBrowserComponent::render(
     glEnable(GL_CLIP_PLANE2);
     glEnable(GL_CLIP_PLANE3);
 
+    _totalBrowserLines = 0;
+
     if (!_relativePathToOpenFolder.empty())
     {
+        _totalBrowserLines++;
+
         auto text = "< " + _relativePathToOpenFolder.string();
 
-        scr::Rectangle border = GetBorderRectangleForFile(text, x, y);
-
-        auto hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
-
-        glBegin(GL_QUADS);
-        glColor4f(0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f);
-        glVertex2f(border.left, border.top);
-        glVertex2f(border.right, border.top);
-        glVertex2f(border.right, border.bottom);
-        glVertex2f(border.left, border.bottom);
-        glEnd();
-
-        float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
-        float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
-        DrawTextBase(_font, xbase, ybase + 20.0f, text.c_str(), text.size(), textFore);
-
-        y = border.bottom + tabItemMargin.Bottom;
+        RenderListItem(inputState, text, x, y);
     }
 
     for (auto &folder : folders)
     {
-        float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
-        float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
+        _totalBrowserLines++;
 
         auto text = "+ " + std::filesystem::relative(folder, _relativePathToOpenFolder).string();
 
-        scr::Rectangle border = GetBorderRectangleForFile(text, x, y);
-
-        auto hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
-
-        glBegin(GL_QUADS);
-        glColor4f(0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f);
-        glVertex2f(border.left, border.top);
-        glVertex2f(border.right, border.top);
-        glVertex2f(border.right, border.bottom);
-        glVertex2f(border.left, border.bottom);
-        glEnd();
-
-        DrawTextBase(_font, xbase, ybase + 20.0f, text.c_str(), text.size(), textFore);
-
-        y = border.bottom;
+        RenderListItem(inputState, text, x, y);
     }
 
     for (auto &file : files)
     {
-        float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
-        float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
+        _totalBrowserLines++;
 
         auto text = "  " + std::filesystem::relative(file, _relativePathToOpenFolder).string();
 
-        scr::Rectangle border = GetBorderRectangleForFile(text, x, y);
-
-        auto hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
-
-        glBegin(GL_QUADS);
-        glColor4f(0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f);
-        glVertex2f(border.left, border.top);
-        glVertex2f(border.right, border.top);
-        glVertex2f(border.right, border.bottom);
-        glVertex2f(border.left, border.bottom);
-        glEnd();
-
-        DrawTextBase(_font, xbase, ybase + 20.0f, text.c_str(), text.size(), textFore);
-
-        y = border.bottom;
+        RenderListItem(inputState, text, x, y);
     }
 
     glDisable(GL_CLIP_PLANE0);
     glDisable(GL_CLIP_PLANE1);
     glDisable(GL_CLIP_PLANE2);
     glDisable(GL_CLIP_PLANE3);
-
-    _totalBrowserLines = 1 + (files.size() + folders.size());
 
     _browserScrollBarFrom->render(inputState);
 }
@@ -180,53 +165,23 @@ void FileSystemBrowserComponent::resize(
 
     if (x >= 0)
     {
-        _origin.x = (float)x;
+        _origin.x = float(x);
     }
     else
     {
-        x = _origin.x;
+        x = int(_origin.x);
     }
 
     if (y >= 0)
     {
-        _origin.y = (float)y;
+        _origin.y = float(y);
     }
     else
     {
-        y = _origin.y;
+        y = int(_origin.y);
     }
 
-    _browserScrollBarFrom->resize(_origin.x, _origin.y, _width, _height);
-}
-
-bool FileSystemBrowserComponent::handleKeyDown(
-    const SDL_KeyboardEvent &event,
-    const struct InputState &inputState)
-{
-    (void)event;
-    (void)inputState;
-
-    return false;
-}
-
-bool FileSystemBrowserComponent::handleKeyUp(
-    const SDL_KeyboardEvent &event,
-    const struct InputState &inputState)
-{
-    (void)event;
-    (void)inputState;
-
-    return false;
-}
-
-bool FileSystemBrowserComponent::handleTextInput(
-    const SDL_TextInputEvent &event,
-    const struct InputState &inputState)
-{
-    (void)event;
-    (void)inputState;
-
-    return false;
+    _browserScrollBarFrom->resize(x, y, _width, _height);
 }
 
 bool FileSystemBrowserComponent::handleMouseButtonInput(
@@ -252,13 +207,11 @@ bool FileSystemBrowserComponent::handleMouseButtonInput(
         auto files = FileSystem.GetFiles(_relativePathToOpenFolder);
 
         float x = _origin.x;
-        float y = _origin.y - (_browserTopLine * browserItemHeight);
+        float y = _origin.y - (_browserTopLine * (tabItemMargin.Top + browserItemHeight + tabItemMargin.Bottom));
 
         if (!_relativePathToOpenFolder.empty())
         {
-            auto text = "< " + _relativePathToOpenFolder.string();
-
-            scr::Rectangle rect = GetBorderRectangleForFile(text, x, y);
+            scr::Rectangle rect = GetBorderRectangleForFile(x, y);
 
             if (rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
             {
@@ -267,44 +220,40 @@ bool FileSystemBrowserComponent::handleMouseButtonInput(
                 return true;
             }
 
-            y = rect.bottom;
+            y = rect.bottom + tabItemMargin.Bottom;
         }
 
         for (auto &folder : folders)
         {
-            auto text = folder.string();
-
-            scr::Rectangle rect = GetBorderRectangleForFile(text, x, y);
+            scr::Rectangle rect = GetBorderRectangleForFile(x, y);
 
             if (rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
             {
-                _relativePathToOpenFolder = folder;
+                _relativePathToOpenFolder = folder.string();
 
                 return true;
             }
 
-            y = rect.bottom;
+            y = rect.bottom + tabItemMargin.Bottom;
         }
 
         for (auto &file : files)
         {
-            auto text = file.string();
-
-            scr::Rectangle rect = GetBorderRectangleForFile(text, x, y);
+            scr::Rectangle rect = GetBorderRectangleForFile(x, y);
 
             if (rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
             {
-                auto fullPath = FileSystem.GetFullPath(text);
+                auto fullPath = FileSystem.GetFullPath(file.string());
 
                 if (onFileLoad)
                 {
-                    onFileLoad(FileSystem.GetFullPath(text));
+                    onFileLoad(FileSystem.GetFullPath(file.string()));
                 }
 
                 return true;
             }
 
-            y = rect.bottom;
+            y = rect.bottom + tabItemMargin.Bottom;
         }
     }
 
@@ -371,14 +320,15 @@ void FileSystemBrowserComponent::ScrollY(
         _browserTopLine = 0;
     }
 
-    if (_browserTopLine >= _totalBrowserLines)
+    auto maxLines = _totalBrowserLines;
+
+    if (_browserTopLine >= maxLines)
     {
-        _browserTopLine = _totalBrowserLines;
+        _browserTopLine = maxLines;
     }
 }
 
 scr::Rectangle FileSystemBrowserComponent::GetBorderRectangleForFile(
-    const std::string &text,
     float &x,
     float &y)
 {
@@ -390,4 +340,39 @@ scr::Rectangle FileSystemBrowserComponent::GetBorderRectangleForFile(
     rect.bottom = rect.top + browserItemHeight + tabItemPadding.Top + tabItemPadding.Bottom;
 
     return rect;
+}
+
+int FileSystemBrowserComponent::ListItemsInView()
+{
+    return int(float(_height) / float(tabItemMargin.Top + browserItemHeight + tabItemMargin.Bottom));
+}
+
+bool FileSystemBrowserComponent::handleKeyDown(
+    const SDL_KeyboardEvent &event,
+    const struct InputState &inputState)
+{
+    (void)event;
+    (void)inputState;
+
+    return false;
+}
+
+bool FileSystemBrowserComponent::handleKeyUp(
+    const SDL_KeyboardEvent &event,
+    const struct InputState &inputState)
+{
+    (void)event;
+    (void)inputState;
+
+    return false;
+}
+
+bool FileSystemBrowserComponent::handleTextInput(
+    const SDL_TextInputEvent &event,
+    const struct InputState &inputState)
+{
+    (void)event;
+    (void)inputState;
+
+    return false;
 }
