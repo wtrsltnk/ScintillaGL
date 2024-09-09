@@ -1,7 +1,6 @@
 
 #include "tabbededitorscomponent.hpp"
 
-#include "filesystemservice.hpp"
 #include "font-utils.hpp"
 #include <filesystem>
 #include <fstream>
@@ -9,7 +8,6 @@
 #include <sstream>
 
 const int tabBarHeight = 45;
-const int browserItemHeight = 30;
 
 glm::vec4 textFore = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -30,19 +28,28 @@ bool TabbedEditorsComponent::init(
     tabItemPadding.Bottom = tabItemPadding.Top = 2;
     tabItemPadding.Left = tabItemPadding.Right = 10;
 
-    _browserScrollBarFrom = std::make_shared<ScrollBarComponent>();
-    _browserScrollBarFrom->init(glm::vec2(_origin.x, _origin.y + tabBarHeight));
+    fileSystemBrowser = std::make_shared<FileSystemBrowserComponent>(_font);
+    fileSystemBrowser->init(glm::vec2(_origin.x, _origin.y + tabBarHeight));
 
-    _browserScrollBarFrom->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
+    fileSystemBrowser->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
 
-    _browserScrollBarFrom->onScrollY = [&](int diff) {
-        auto a = (_totalBrowserLines / float(_height - tabBarHeight));
-        auto amount = float(diff * a);
-        ScrollY(amount);
-    };
-    _browserScrollBarFrom->getScrollInfo = [&](float &start, float &length) {
-        start = _browserTopLine / float(_totalBrowserLines);
-        length = (float(_height - tabBarHeight) / float(browserItemHeight + tabItemMargin.Top + tabItemMargin.Bottom)) / float(_totalBrowserLines);
+    fileSystemBrowser->onFileLoad = [&](const std::filesystem::path &fullPath) {
+        if (switchedFrom != nullptr)
+        {
+            auto switchedFromEditor = dynamic_cast<TabbedEditorsComponent *>(switchedFrom.get());
+            if (switchedFromEditor != nullptr)
+            {
+                switchedFromEditor->loadFile(fullPath.generic_string());
+            }
+            else
+            {
+                loadFile(fullPath.generic_string());
+            }
+        }
+        else
+        {
+            loadFile(fullPath.generic_string());
+        }
     };
 
     return true;
@@ -220,113 +227,7 @@ void TabbedEditorsComponent::render(
     }
     else
     {
-        auto folders = FileSystem.GetFolders(_relativePathToOpenFolder);
-        auto files = FileSystem.GetFiles(_relativePathToOpenFolder);
-
-        float x = _origin.x;
-        float y = _origin.y;
-
-        RenderTab(inputState, " + ", x, y, false);
-
-        x = _origin.x;
-        y = _origin.y + tabBarHeight - (_browserTopLine * browserItemHeight);
-
-        double plane[][4] = {
-            {1, 0, 0, -_origin.x},
-            {-1, 0, 0, _origin.x + _width},
-            {0, 1, 0, -(_origin.y + tabBarHeight)},
-            {0, -1, 0, _origin.y + _height},
-        };
-
-        glClipPlane(GL_CLIP_PLANE0, plane[0]);
-        glClipPlane(GL_CLIP_PLANE1, plane[1]);
-        glClipPlane(GL_CLIP_PLANE2, plane[2]);
-        glClipPlane(GL_CLIP_PLANE3, plane[3]);
-
-        glEnable(GL_CLIP_PLANE0);
-        glEnable(GL_CLIP_PLANE1);
-        glEnable(GL_CLIP_PLANE2);
-        glEnable(GL_CLIP_PLANE3);
-
-        if (!_relativePathToOpenFolder.empty())
-        {
-            auto text = "< " + _relativePathToOpenFolder.string();
-
-            scr::Rectangle border = GetBorderRectangleForFile(text, x, y);
-
-            auto hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
-
-            glBegin(GL_QUADS);
-            glColor4f(0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f);
-            glVertex2f(border.left, border.top);
-            glVertex2f(border.right, border.top);
-            glVertex2f(border.right, border.bottom);
-            glVertex2f(border.left, border.bottom);
-            glEnd();
-
-            float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
-            float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
-            DrawTextBase(_font, xbase, ybase + 20.0f, text.c_str(), text.size(), textFore);
-
-            y = border.bottom + tabItemMargin.Bottom;
-        }
-
-        for (auto &folder : folders)
-        {
-            float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
-            float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
-
-            auto text = "+ " + std::filesystem::relative(folder, _relativePathToOpenFolder).string();
-
-            scr::Rectangle border = GetBorderRectangleForFile(text, x, y);
-
-            auto hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
-
-            glBegin(GL_QUADS);
-            glColor4f(0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f);
-            glVertex2f(border.left, border.top);
-            glVertex2f(border.right, border.top);
-            glVertex2f(border.right, border.bottom);
-            glVertex2f(border.left, border.bottom);
-            glEnd();
-
-            DrawTextBase(_font, xbase, ybase + 20.0f, text.c_str(), text.size(), textFore);
-
-            y = border.bottom;
-        }
-
-        for (auto &file : files)
-        {
-            float xbase = x + 2 + tabItemMargin.Left + tabItemPadding.Left;
-            float ybase = y + tabItemMargin.Top + tabItemPadding.Top;
-
-            auto text = "  " + std::filesystem::relative(file, _relativePathToOpenFolder).string();
-
-            scr::Rectangle border = GetBorderRectangleForFile(text, x, y);
-
-            auto hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
-
-            glBegin(GL_QUADS);
-            glColor4f(0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f);
-            glVertex2f(border.left, border.top);
-            glVertex2f(border.right, border.top);
-            glVertex2f(border.right, border.bottom);
-            glVertex2f(border.left, border.bottom);
-            glEnd();
-
-            DrawTextBase(_font, xbase, ybase + 20.0f, text.c_str(), text.size(), textFore);
-
-            y = border.bottom;
-        }
-
-        glDisable(GL_CLIP_PLANE0);
-        glDisable(GL_CLIP_PLANE1);
-        glDisable(GL_CLIP_PLANE2);
-        glDisable(GL_CLIP_PLANE3);
-
-        _totalBrowserLines = 1 + (files.size() + folders.size());
-
-        _browserScrollBarFrom->render(inputState);
+        fileSystemBrowser->render(inputState);
     }
 }
 
@@ -357,7 +258,7 @@ void TabbedEditorsComponent::resize(
         y = _origin.y;
     }
 
-    _browserScrollBarFrom->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
+    fileSystemBrowser->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
 
     for (const auto &tab : tabs)
     {
@@ -391,7 +292,14 @@ bool TabbedEditorsComponent::handleKeyDown(
         }
     }
 
-    if (!tabs.empty() && tabs.size() > _activeTab)
+    if (tabs.empty())
+    {
+        if (fileSystemBrowser->handleKeyDown(event, inputState))
+        {
+            return true;
+        }
+    }
+    else if (!tabs.empty() && tabs.size() > _activeTab)
     {
         return tabs[_activeTab]->handleKeyDown(event, inputState);
     }
@@ -406,7 +314,14 @@ bool TabbedEditorsComponent::handleKeyUp(
     (void)event;
     (void)inputState;
 
-    if (!tabs.empty() && tabs.size() > _activeTab)
+    if (tabs.empty())
+    {
+        if (fileSystemBrowser->handleKeyUp(event, inputState))
+        {
+            return true;
+        }
+    }
+    else if (!tabs.empty() && tabs.size() > _activeTab)
     {
         return tabs[_activeTab]->handleKeyUp(event, inputState);
     }
@@ -421,7 +336,14 @@ bool TabbedEditorsComponent::handleTextInput(
     (void)event;
     (void)inputState;
 
-    if (!tabs.empty() && tabs.size() > _activeTab)
+    if (tabs.empty())
+    {
+        if (fileSystemBrowser->handleTextInput(event, inputState))
+        {
+            return true;
+        }
+    }
+    else if (!tabs.empty() && tabs.size() > _activeTab)
     {
         return tabs[_activeTab]->handleTextInput(event, inputState);
     }
@@ -439,6 +361,14 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
     if (!isHit(glm::vec2(event.x, event.y)))
     {
         return false;
+    }
+
+    if (tabs.empty())
+    {
+        if (fileSystemBrowser->handleMouseButtonInput(event, inputState))
+        {
+            return true;
+        }
     }
 
     if (event.type == SDL_MOUSEBUTTONDOWN)
@@ -481,99 +411,10 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
 
             return true;
         }
-
-        if (tabs.empty())
-        {
-            if (_browserScrollBarFrom->handleMouseButtonInput(event, inputState))
-            {
-                return true;
-            }
-
-            auto folders = FileSystem.GetFolders(_relativePathToOpenFolder);
-            auto files = FileSystem.GetFiles(_relativePathToOpenFolder);
-
-            float x = _origin.x;
-            float y = _origin.y;
-
-            RenderTab(inputState, " + ", x, y, false);
-
-            x = _origin.x;
-            y = _origin.y + tabBarHeight - (_browserTopLine * browserItemHeight);
-
-            if (!_relativePathToOpenFolder.empty())
-            {
-                auto text = "< " + _relativePathToOpenFolder.string();
-
-                scr::Rectangle rect = GetBorderRectangleForFile(text, x, y);
-
-                if (rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
-                {
-                    _relativePathToOpenFolder = _relativePathToOpenFolder.parent_path();
-
-                    return true;
-                }
-
-                y = rect.bottom;
-            }
-
-            for (auto &folder : folders)
-            {
-                auto text = folder.string();
-
-                scr::Rectangle rect = GetBorderRectangleForFile(text, x, y);
-
-                if (rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
-                {
-                    _relativePathToOpenFolder = folder;
-
-                    return true;
-                }
-
-                y = rect.bottom;
-            }
-
-            for (auto &file : files)
-            {
-                auto text = file.string();
-
-                scr::Rectangle rect = GetBorderRectangleForFile(text, x, y);
-
-                if (rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
-                {
-                    auto fullPath = FileSystem.GetFullPath(text);
-
-                    if (switchedFrom != nullptr)
-                    {
-                        auto switchedFromEditor = dynamic_cast<TabbedEditorsComponent *>(switchedFrom.get());
-                        if (switchedFromEditor != nullptr)
-                        {
-                            switchedFromEditor->loadFile(fullPath.generic_string());
-                        }
-                        else
-                        {
-                            loadFile(fullPath.generic_string());
-                        }
-                    }
-                    else
-                    {
-                        loadFile(fullPath.generic_string());
-                    }
-
-                    return true;
-                }
-
-                y = rect.bottom;
-            }
-        }
     }
 
     if (event.type == SDL_MOUSEBUTTONUP)
     {
-        if (_browserScrollBarFrom->handleMouseButtonInput(event, inputState))
-        {
-            return true;
-        }
-
         _draggingTab = false;
     }
 
@@ -604,13 +445,12 @@ bool TabbedEditorsComponent::handleMouseMotionInput(
 
     if (tabs.empty())
     {
-        if (_browserScrollBarFrom->handleMouseMotionInput(event, inputState))
+        if (fileSystemBrowser->handleMouseMotionInput(event, inputState))
         {
             return true;
         }
     }
-
-    if (!tabs.empty() && tabs.size() > _activeTab)
+    else if (!tabs.empty() && tabs.size() > _activeTab)
     {
         return tabs[_activeTab]->handleMouseMotionInput(event, inputState);
     }
@@ -632,51 +472,17 @@ bool TabbedEditorsComponent::handleMouseWheel(
 
     if (tabs.empty())
     {
-        if (_browserScrollBarFrom->handleMouseWheel(event, inputState))
+        if (fileSystemBrowser->handleMouseWheel(event, inputState))
         {
             return true;
         }
-
-        ScrollY((event.y / glm::abs(event.y)) * 10);
     }
-
-    if (!tabs.empty() && tabs.size() > _activeTab)
+    else if (!tabs.empty() && tabs.size() > _activeTab)
     {
         return tabs[_activeTab]->handleMouseWheel(event, inputState);
     }
 
     return false;
-}
-
-void TabbedEditorsComponent::ScrollY(
-    float amount)
-{
-    _browserTopLine -= amount;
-
-    if (_browserTopLine < 0)
-    {
-        _browserTopLine = 0;
-    }
-
-    if (_browserTopLine >= _totalBrowserLines)
-    {
-        _browserTopLine = _totalBrowserLines;
-    }
-}
-
-scr::Rectangle TabbedEditorsComponent::GetBorderRectangleForFile(
-    const std::string &text,
-    float &x,
-    float &y)
-{
-    scr::Rectangle rect;
-
-    rect.top = y + tabItemMargin.Top;
-    rect.left = _origin.x;
-    rect.right = _origin.x + _width;
-    rect.bottom = rect.top + browserItemHeight + tabItemPadding.Top + tabItemPadding.Bottom;
-
-    return rect;
 }
 
 scr::Rectangle TabbedEditorsComponent::GetBorderRectangle(

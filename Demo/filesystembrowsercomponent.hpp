@@ -1,19 +1,19 @@
-#ifndef TABBEDEDITORSLAYER_HPP
-#define TABBEDEDITORSLAYER_HPP
+#ifndef FILESYSTEMBROWSERCOMPONENT_H
+#define FILESYSTEMBROWSERCOMPONENT_H
 
-#include "editorcomponent.hpp"
-#include "filesystembrowsercomponent.hpp"
+#include "font-utils.hpp"
 #include "icomponent.hpp"
 #include "screen-utils.hpp"
+#include "scrollbarcomponent.hpp"
 #include <filesystem>
+#include <functional>
 #include <memory>
-#include <vector>
+#include <string>
 
-class TabbedEditorsComponent : public IComponent
+class FileSystemBrowserComponent : public IComponent
 {
 public:
-    TabbedEditorsComponent(std::unique_ptr<Font> &font);
-    virtual ~TabbedEditorsComponent() = default;
+    FileSystemBrowserComponent(std::unique_ptr<Font> &font);
 
     bool init(const glm::vec2 &origin);
 
@@ -30,36 +30,22 @@ public:
     struct scr::Padding tabItemPadding;
     struct scr::Margin tabItemMargin;
 
-    void loadFile(
-        const std::filesystem::path &fileName);
-
-    void newTab(
-        bool switchTo = true);
-
-    void closeTab(
-        size_t index);
-
-    std::shared_ptr<IComponent> switchedFrom;
-    std::shared_ptr<FileSystemBrowserComponent> fileSystemBrowser;
-    std::vector<std::shared_ptr<EditorComponent>> tabs;
+    std::function<void(const std::filesystem::path &)> onFileLoad;
 
 private:
     std::unique_ptr<Font> &_font;
-    size_t _activeTab = 0;
-    bool _draggingTab = false;
-    int _draggingStartX = 0;
+    std::shared_ptr<ScrollBarComponent> _browserScrollBarFrom;
+    std::filesystem::path _relativePathToOpenFolder = "";
+    float _totalBrowserLines = 0;
+    float _browserTopLine = 0;
 
-    scr::Rectangle GetBorderRectangle(
+    void ScrollY(
+        float amount);
+
+    scr::Rectangle GetBorderRectangleForFile(
         const std::string &text,
         float &x,
         float &y);
-
-    scr::Rectangle RenderTab(
-        const struct InputState &inputState,
-        const std::string &text,
-        float &x,
-        float &y,
-        bool isActiveTab);
 };
 
-#endif // TABBEDEDITORSLAYER_HPP
+#endif // FILESYSTEMBROWSERCOMPONENT_H

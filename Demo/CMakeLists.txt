@@ -17,6 +17,8 @@ target_sources(Demo
         "ShaderEditOverlay.hpp"
         "editorcomponent.cpp"
         "editorcomponent.hpp"
+        "filesystembrowsercomponent.cpp"
+        "filesystembrowsercomponent.hpp"
         "filesystemservice.cpp"
         "filesystemservice.hpp"
         "font-utils.hpp"

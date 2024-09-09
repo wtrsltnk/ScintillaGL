@@ -18,4 +18,6 @@ float WidthText(
     const char *s,
     size_t len);
 
+extern glm::vec4 textFore;
+
 #endif // FONT_UTILS_HPP
