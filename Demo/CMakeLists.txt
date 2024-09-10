@@ -26,6 +26,7 @@ target_sources(Demo
         "icomponent.hpp"
         "menucomponent.cpp"
         "menucomponent.hpp"
+        "screen-utils.cpp"
         "screen-utils.hpp"
         "scrollbarcomponent.cpp"
         "scrollbarcomponent.hpp"

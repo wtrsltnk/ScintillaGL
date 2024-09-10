@@ -65,6 +65,10 @@ namespace scr
         }
     };
 
+    void RenderQuad(
+        const glm::vec4 &color,
+        const Rectangle &rc);
+
     enum class Direction
     {
         Horizontal,

@@ -51,13 +51,7 @@ void FileSystemBrowserComponent::RenderListItem(
 
     auto hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
 
-    glBegin(GL_QUADS);
-    glColor4f(0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f);
-    glVertex2f(border.left, border.top);
-    glVertex2f(border.right, border.top);
-    glVertex2f(border.right, border.bottom);
-    glVertex2f(border.left, border.bottom);
-    glEnd();
+    scr::RenderQuad({0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f}, border);
 
     DrawTextBase(
         _font,
@@ -72,28 +66,10 @@ void FileSystemBrowserComponent::RenderListItem(
 void FileSystemBrowserComponent::render(
     const struct InputState &inputState)
 {
-    const float border = 4.0f;
-
     (void)inputState;
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glBegin(GL_QUADS);
-    glColor4f(0.4f, 0.4f, 0.4f, 1.0f);
-    glVertex2f(_origin.x, _origin.y);
-    glVertex2f(_origin.x + _width, _origin.y);
-    glVertex2f(_origin.x + _width, _origin.y - border);
-    glVertex2f(_origin.x, _origin.y - border);
-    glEnd();
-
-    glBegin(GL_QUADS);
-    glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
-    glVertex2f(_origin.x, _origin.y - border);
-    glVertex2f(_origin.x + _width, _origin.y - border);
-    glVertex2f(_origin.x + _width, _origin.y + _height);
-    glVertex2f(_origin.x, _origin.y + _height);
-    glEnd();
 
     auto folders = FileSystem.GetFolders(_relativePathToOpenFolder);
     auto files = FileSystem.GetFiles(_relativePathToOpenFolder);
