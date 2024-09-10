@@ -1,6 +1,7 @@
 
 #include "menucomponent.hpp"
 
+#include "screen-utils.hpp"
 #include "stbtt_font.hpp"
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -116,22 +117,14 @@ void MenuComponent::render(const struct InputState &inputState)
         bool hover = inputState.mouseY > border.top && inputState.mouseX > border.left &&
                      inputState.mouseY < border.bottom && inputState.mouseX < border.right;
 
-        glBegin(GL_QUADS);
-
         if (hover)
         {
-            glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
+            scr::FillQuad({0.5f, 0.5f, 0.5f, 1.0f}, border);
         }
         else
         {
-            glColor4f(0.4f, 0.4f, 0.4f, 1.0f);
+            scr::FillQuad({0.4f, 0.4f, 0.4f, 1.0f}, border);
         }
-
-        glVertex2f(border.left, border.top);
-        glVertex2f(border.right, border.top);
-        glVertex2f(border.right, border.bottom);
-        glVertex2f(border.left, border.bottom);
-        glEnd();
 
         DrawTextBase(_font, xbase, ybase + 14.0f, menuItem.name, menuItem.enabled ? textFore : textForeDisabled);
 
@@ -158,15 +151,7 @@ void MenuComponent::render(const struct InputState &inputState)
 
     if (_direction == scr::Direction::Vertical)
     {
-        glBegin(GL_LINE_LOOP);
-
-        glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
-
-        glVertex2f(menuRect.left, menuRect.top);
-        glVertex2f(menuRect.right, menuRect.top);
-        glVertex2f(menuRect.right, menuRect.bottom);
-        glVertex2f(menuRect.left, menuRect.bottom);
-        glEnd();
+        scr::DrawQuad({0.5f, 0.5f, 0.5f, 1.0f}, menuRect);
     }
 
     if (_openSubMenu != nullptr)

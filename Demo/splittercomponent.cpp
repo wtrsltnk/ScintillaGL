@@ -73,45 +73,28 @@ void SplitterComponent::render(
     {
         _editor->render(inputState);
 
-        glClipPlane(GL_CLIP_PLANE0, plane[0]);
-        glClipPlane(GL_CLIP_PLANE1, plane[1]);
-        glClipPlane(GL_CLIP_PLANE2, plane[2]);
-        glClipPlane(GL_CLIP_PLANE3, plane[3]);
+        auto rect1 = GetAddSplitButtonRect1();
 
-        auto rect = GetAddSplitButtonRect1();
+        auto alpha1 = rect1.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)) ? 1.0f : 0.0f;
 
-        glBegin(GL_QUADS);
-        glColor4f(0.5f, 0.5f, 0.5f, rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)) ? 1.0f : 0.0f);
-        glVertex2f(rect.left, rect.top);
-        glVertex2f(rect.right, rect.top);
-        glVertex2f(rect.right, rect.bottom);
-        glVertex2f(rect.left, rect.bottom);
-        glEnd();
+        scr::FillQuad({0.5f, 0.5f, 0.5f, alpha1}, rect1);
 
-        rect = GetAddSplitButtonRect2();
+        auto rect2 = GetAddSplitButtonRect2();
 
-        glBegin(GL_QUADS);
-        glColor4f(0.5f, 0.5f, 0.5f, rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)) ? 1.0f : 0.0f);
-        glVertex2f(rect.left, rect.top);
-        glVertex2f(rect.right, rect.top);
-        glVertex2f(rect.right, rect.bottom);
-        glVertex2f(rect.left, rect.bottom);
-        glEnd();
+        auto alpha2 = rect2.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)) ? 1.0f : 0.0f;
+
+        scr::FillQuad({0.5f, 0.5f, 0.5f, alpha2}, rect2);
     }
     else
     {
         _panel1->render(inputState);
         _panel2->render(inputState);
 
-        scr::Rectangle rect = GetSplitBarRect();
+        auto rect1 = GetSplitBarRect();
 
-        glBegin(GL_QUADS);
-        glColor4f(0.5f, 0.5f, 0.5f, rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)) ? 1.0f : 0.0f);
-        glVertex2f(rect.left, rect.top);
-        glVertex2f(rect.right, rect.top);
-        glVertex2f(rect.right, rect.bottom);
-        glVertex2f(rect.left, rect.bottom);
-        glEnd();
+        auto alpha1 = rect1.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)) ? 1.0f : 0.0f;
+
+        scr::FillQuad({0.5f, 0.5f, 0.5f, alpha1}, rect1);
     }
     glDisable(GL_CLIP_PLANE0);
     glDisable(GL_CLIP_PLANE1);

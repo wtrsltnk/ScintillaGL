@@ -102,7 +102,8 @@ EditorComponent::EditorComponent()
     mMainEditor.SetLexer(mLexer.get());
 }
 
-void EditorComponent::loadContent(const std::string &content)
+void EditorComponent::loadContent(
+    const std::string &content)
 {
     mMainEditor.Command(SCI_CANCEL);
     mMainEditor.Command(SCI_CLEARALL);
@@ -114,7 +115,8 @@ void EditorComponent::loadContent(const std::string &content)
     mMainEditor.Command(SCI_GOTOPOS, 0);
 }
 
-bool EditorComponent::init(const glm::vec2 &origin)
+bool EditorComponent::init(
+    const glm::vec2 &origin)
 {
     _origin = origin;
 
@@ -136,7 +138,8 @@ bool EditorComponent::init(const glm::vec2 &origin)
     return true;
 }
 
-void EditorComponent::render(const struct InputState &inputState)
+void EditorComponent::render(
+    const struct InputState &inputState)
 {
     (void)inputState;
 
@@ -152,7 +155,11 @@ void EditorComponent::render(const struct InputState &inputState)
     _scrollBarLayer.render(inputState);
 }
 
-void EditorComponent::resize(int x, int y, int w, int h)
+void EditorComponent::resize(
+    int x,
+    int y,
+    int w,
+    int h)
 {
     _width = w;
     _height = h;
@@ -164,7 +171,9 @@ void EditorComponent::resize(int x, int y, int w, int h)
     _scrollBarLayer.resize(_origin.x, _origin.y, _width, _height);
 }
 
-bool EditorComponent::handleKeyDown(const SDL_KeyboardEvent &event, const struct InputState &inputState)
+bool EditorComponent::handleKeyDown(
+    const SDL_KeyboardEvent &event,
+    const struct InputState &inputState)
 {
     if (_scrollBarLayer.handleKeyDown(event, inputState)) return true;
 
@@ -277,7 +286,9 @@ bool EditorComponent::handleKeyDown(const SDL_KeyboardEvent &event, const struct
     return false;
 }
 
-bool EditorComponent::handleKeyUp(const SDL_KeyboardEvent &event, const struct InputState &inputState)
+bool EditorComponent::handleKeyUp(
+    const SDL_KeyboardEvent &event,
+    const struct InputState &inputState)
 {
     (void)event;
     (void)inputState;
@@ -384,7 +395,13 @@ bool EditorComponent::handleMouseWheel(
     return false;
 }
 
-void SetAStyle(Editor &ed, int style, Colour fore, Colour back = 0xFFFFFFFF, int size = -1, const char *face = 0)
+void SetAStyle(
+    Editor &ed,
+    int style,
+    Colour fore,
+    Colour back = 0xFFFFFFFF,
+    int size = -1,
+    const char *face = 0)
 {
     ed.Command(SCI_STYLESETFORE, style, fore);
     ed.Command(SCI_STYLESETBACK, style, back);

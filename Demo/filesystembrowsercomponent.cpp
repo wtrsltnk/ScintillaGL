@@ -51,7 +51,7 @@ void FileSystemBrowserComponent::RenderListItem(
 
     auto hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
 
-    scr::RenderQuad({0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f}, border);
+    scr::FillQuad({0.4f, 0.4f, 0.4f, hover ? 1.0f : 0.0f}, border);
 
     DrawTextBase(
         _font,
@@ -76,6 +76,14 @@ void FileSystemBrowserComponent::render(
 
     float x = _origin.x;
     float y = _origin.y - (int(_browserTopLine) * ItemHeightWithMarginAndPadding());
+
+    glBegin(GL_QUADS);
+    glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
+    glVertex2f(_origin.x, _origin.y);
+    glVertex2f(_origin.x + _width, _origin.y);
+    glVertex2f(_origin.x + _width, _origin.y + _height);
+    glVertex2f(_origin.x, _origin.y + _height);
+    glEnd();
 
     double plane[][4] = {
         {1, 0, 0, -_origin.x},

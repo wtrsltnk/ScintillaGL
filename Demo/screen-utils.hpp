@@ -65,7 +65,11 @@ namespace scr
         }
     };
 
-    void RenderQuad(
+    void FillQuad(
+        const glm::vec4 &color,
+        const Rectangle &rc);
+
+    void DrawQuad(
         const glm::vec4 &color,
         const Rectangle &rc);
 

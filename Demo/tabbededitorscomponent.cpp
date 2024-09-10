@@ -22,11 +22,11 @@ bool TabbedEditorsComponent::init(
 {
     _origin = origin;
 
-    tabItemMargin.Bottom = tabItemMargin.Top = 4;
-    tabItemMargin.Left = tabItemMargin.Right = 4;
+    tabMargin.Bottom = tabMargin.Top = 4;
+    tabMargin.Left = tabMargin.Right = 4;
 
-    tabItemPadding.Bottom = tabItemPadding.Top = 2;
-    tabItemPadding.Left = tabItemPadding.Right = 10;
+    tabPadding.Bottom = tabPadding.Top = 2;
+    tabPadding.Left = tabPadding.Right = 10;
 
     fileSystemBrowser = std::make_shared<FileSystemBrowserComponent>(_font);
     fileSystemBrowser->init(glm::vec2(_origin.x, _origin.y + tabBarHeight));
@@ -131,26 +131,21 @@ void TabbedEditorsComponent::RenderTab(
         hover = false;
     }
 
-    auto dragAmount = inputState.mouseX - _draggingStartX;
+    // auto dragAmount = inputState.mouseX - _draggingStartX;
 
-    if (!isActiveTab || !_draggingTab)
-    {
-        dragAmount = 0;
-    }
+    // if (!isActiveTab || !_draggingTab)
+    // {
+    //     dragAmount = 0;
+    // }
 
-    glBegin(GL_QUADS);
-    glColor4f(0.2f, 0.2f, 0.2f, isActiveTab ? 1.0f : hover ? 0.6f
-                                                           : 0.4f);
-    glVertex2f(border.left + dragAmount, border.top);
-    glVertex2f(border.right + dragAmount, border.top);
-    glVertex2f(border.right + dragAmount, border.bottom);
-    glVertex2f(border.left + dragAmount, border.bottom);
-    glEnd();
+    auto alpha = isActiveTab ? 1.0f : (hover ? 0.6f : 0.4f);
+
+    scr::FillQuad({0.2f, 0.2f, 0.2f, alpha}, border);
 
     DrawTextBase(
         _font,
-        border.left + dragAmount + tabItemMargin.Left + tabItemPadding.Left,
-        border.top + tabItemMargin.Top + tabItemPadding.Top + 20.0f,
+        border.left + tabMargin.Left + tabPadding.Left,
+        border.top + tabMargin.Top + tabPadding.Top + 20.0f,
         text,
         textFore);
 
@@ -160,8 +155,6 @@ void TabbedEditorsComponent::RenderTab(
 void TabbedEditorsComponent::render(
     const struct InputState &inputState)
 {
-    const float border = 4.0f;
-
     (void)inputState;
 
     float x = _origin.x;
@@ -169,22 +162,6 @@ void TabbedEditorsComponent::render(
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    glBegin(GL_QUADS);
-    glColor4f(0.4f, 0.4f, 0.4f, 1.0f);
-    glVertex2f(_origin.x, _origin.y);
-    glVertex2f(_origin.x + _width, _origin.y);
-    glVertex2f(_origin.x + _width, _origin.y + tabBarHeight - border);
-    glVertex2f(_origin.x, _origin.y + tabBarHeight - border);
-    glEnd();
-
-    glBegin(GL_QUADS);
-    glColor4f(0.2f, 0.2f, 0.2f, 1.0f);
-    glVertex2f(_origin.x, _origin.y + tabBarHeight - border);
-    glVertex2f(_origin.x + _width, _origin.y + tabBarHeight - border);
-    glVertex2f(_origin.x + _width, _origin.y + _height);
-    glVertex2f(_origin.x, _origin.y + _height);
-    glEnd();
 
     if (!tabs.empty())
     {
@@ -469,12 +446,15 @@ scr::Rectangle TabbedEditorsComponent::GetBorderRectangle(
 
     scr::Rectangle border;
 
-    border.top = y + tabItemMargin.Top;
-    border.bottom = border.top + tabItemPadding.Top + tabBarHeight + tabItemPadding.Bottom + tabItemMargin.Bottom;
-    border.left = x + tabItemMargin.Left;
-    border.right = x + tabItemMargin.Left + tabItemPadding.Left  // Left margin and padding
-                   + width                                       // This is the text with
-                   + tabItemPadding.Right + tabItemMargin.Right; // Right padding and margin
+    border.top = y + tabMargin.Top;
+    border.bottom = y + tabMargin.Top + tabPadding.Top      // Left margin and padding
+                    + tabBarHeight                          // This is the tab height
+                    + tabPadding.Bottom + tabMargin.Bottom; // Right padding and margin
+
+    border.left = x + tabMargin.Left;
+    border.right = x + tabMargin.Left + tabPadding.Left  // Left margin and padding
+                   + width                               // This is the text with
+                   + tabPadding.Right + tabMargin.Right; // Right padding and margin
 
     return border;
 }

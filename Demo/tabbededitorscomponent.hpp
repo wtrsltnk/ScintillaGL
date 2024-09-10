@@ -27,8 +27,8 @@ public:
     virtual bool handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState);
     virtual bool handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState);
 
-    struct scr::Padding tabItemPadding;
-    struct scr::Margin tabItemMargin;
+    struct scr::Padding tabPadding;
+    struct scr::Margin tabMargin;
 
     void loadFile(
         const std::filesystem::path &fileName);

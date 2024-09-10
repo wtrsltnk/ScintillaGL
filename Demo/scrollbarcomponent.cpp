@@ -1,6 +1,7 @@
 
 #include "scrollbarcomponent.hpp"
 
+#include "screen-utils.hpp"
 #include <glad/glad.h>
 
 bool ScrollBarComponent::init(
@@ -18,7 +19,7 @@ void ScrollBarComponent::render(
 
     _hoverScroll = (inputState.mouseX - _origin.x) > (_width - (scrollBarWidth * 5)) && (inputState.mouseX - _origin.x) < _width;
 
-    float start = 0.0f, length = _height;
+    float start = 0.0f, length = float(_height);
     if (getScrollInfo)
     {
         getScrollInfo(start, length);
@@ -34,31 +35,27 @@ void ScrollBarComponent::render(
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glBegin(GL_QUADS);
-    glColor4f(0.7f, 0.7f, 0.7f, _hoverScroll || _scrolling ? 1.0f : 0.4f);
+    scr::Rectangle rect({
+        _origin.x + _width - scrollBarWidth,
+        _origin.x + _width,
+        _origin.y + _height * start,
+        _origin.y + _height * (start + length),
+    });
 
-    glVertex2f(_origin.x + _width - scrollBarWidth, _origin.y + _height * start);
-    glVertex2f(_origin.x + _width, _origin.y + _height * start);
-    glVertex2f(_origin.x + _width, _origin.y + _height * (start + length));
-    glVertex2f(_origin.x + _width - scrollBarWidth, _origin.y + _height * (start + length));
-    glEnd();
-
-    glBegin(GL_LINE_LOOP);
-    glColor4f(0.0f, 0.0f, 0.0f, _hoverScroll || _scrolling ? 1.0f : 0.4f);
-
-    glVertex2f(_origin.x + _width - scrollBarWidth, _origin.y + _height * start);
-    glVertex2f(_origin.x + _width, _origin.y + _height * start);
-    glVertex2f(_origin.x + _width, _origin.y + _height * (start + length));
-    glVertex2f(_origin.x + _width - scrollBarWidth, _origin.y + _height * (start + length));
-    glEnd();
+    scr::FillQuad({0.7f, 0.7f, 0.7f, _hoverScroll || _scrolling ? 1.0f : 0.4f}, rect);
+    scr::DrawQuad({0.0f, 0.0f, 0.0f, _hoverScroll || _scrolling ? 1.0f : 0.4f}, rect);
 }
 
-void ScrollBarComponent::resize(int x, int y, int w, int h)
+void ScrollBarComponent::resize(
+    int x,
+    int y,
+    int w,
+    int h)
 {
     _width = w;
     _height = h;
-    _origin.x = x;
-    _origin.y = y;
+    _origin.x = float(x);
+    _origin.y = float(y);
 }
 
 bool ScrollBarComponent::handleMouseButtonInput(
@@ -74,7 +71,7 @@ bool ScrollBarComponent::handleMouseButtonInput(
         if (event.state == SDL_PRESSED)
         {
             _scrolling = true;
-            _startValue = (event.y - _origin.y);
+            _startValue = int(event.y - _origin.y);
         }
 
         return true;
@@ -96,9 +93,9 @@ bool ScrollBarComponent::handleMouseMotionInput(
 
     if (_scrolling)
     {
-        onScrollY(_startValue - (event.y - _origin.y));
+        onScrollY(_startValue - int(event.y - _origin.y));
 
-        _startValue = (event.y - _origin.y);
+        _startValue = int(event.y - _origin.y);
 
         return true;
     }
