@@ -1,9 +1,7 @@
 
 #include "scrollbarcomponent.hpp"
 
-#include "screen-utils.hpp"
 #include <glad/glad.h>
-#include <iostream>
 
 bool ScrollBarComponent::init(
     const glm::vec2 &origin)
@@ -63,36 +61,6 @@ void ScrollBarComponent::resize(int x, int y, int w, int h)
     _origin.y = y;
 }
 
-bool ScrollBarComponent::handleKeyDown(
-    const SDL_KeyboardEvent &event,
-    const struct InputState &inputState)
-{
-    (void)event;
-    (void)inputState;
-
-    return false;
-}
-
-bool ScrollBarComponent::handleKeyUp(
-    const SDL_KeyboardEvent &event,
-    const struct InputState &inputState)
-{
-    (void)event;
-    (void)inputState;
-
-    return false;
-}
-
-bool ScrollBarComponent::handleTextInput(
-    const SDL_TextInputEvent &event,
-    const struct InputState &inputState)
-{
-    (void)event;
-    (void)inputState;
-
-    return false;
-}
-
 bool ScrollBarComponent::handleMouseButtonInput(
     const SDL_MouseButtonEvent &event,
     const struct InputState &inputState)
@@ -129,10 +97,41 @@ bool ScrollBarComponent::handleMouseMotionInput(
     if (_scrolling)
     {
         onScrollY(_startValue - (event.y - _origin.y));
+
         _startValue = (event.y - _origin.y);
 
         return true;
     }
+
+    return false;
+}
+
+bool ScrollBarComponent::handleKeyDown(
+    const SDL_KeyboardEvent &event,
+    const struct InputState &inputState)
+{
+    (void)event;
+    (void)inputState;
+
+    return false;
+}
+
+bool ScrollBarComponent::handleKeyUp(
+    const SDL_KeyboardEvent &event,
+    const struct InputState &inputState)
+{
+    (void)event;
+    (void)inputState;
+
+    return false;
+}
+
+bool ScrollBarComponent::handleTextInput(
+    const SDL_TextInputEvent &event,
+    const struct InputState &inputState)
+{
+    (void)event;
+    (void)inputState;
 
     return false;
 }

@@ -20,7 +20,7 @@ int w = 1024, h = 768;
 
 int main(
     int argc,
-    char* argv[])
+    char *argv[])
 {
     std::filesystem::path root = std::filesystem::current_path();
 
@@ -75,6 +75,11 @@ int main(
 
         return 1;
     }
+
+    std::cout << "GL_VERSION                  : " << (const char *)glGetString(GL_VERSION) << std::endl;
+    std::cout << "GL_SHADING_LANGUAGE_VERSION : " << (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+    std::cout << "GL_RENDERER                 : " << (const char *)glGetString(GL_RENDERER) << std::endl;
+    std::cout << "GL_VENDOR                   : " << (const char *)glGetString(GL_VENDOR) << std::endl;
 
     SDL_SysWMinfo systemInfo;
     SDL_VERSION(&systemInfo.version);
