@@ -27,14 +27,14 @@ public:
     virtual bool handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState);
     virtual bool handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState);
 
-    struct scr::Padding tabItemPadding;
-    struct scr::Margin tabItemMargin;
+    struct scr::Padding padding;
+    struct scr::Margin margin;
 
     std::function<void(const std::filesystem::path &)> onFileLoad;
 
 private:
     std::unique_ptr<Font> &_font;
-    std::shared_ptr<ScrollBarComponent> _browserScrollBarFrom;
+    std::shared_ptr<ScrollBarComponent> _scrollBar;
     std::filesystem::path _relativePathToOpenFolder = "";
     float _totalBrowserLines = 0;
     float _browserTopLine = 0;
@@ -52,6 +52,7 @@ private:
         float &x,
         float &y);
 
+    float ItemHeightWithMarginAndPadding();
     int ListItemsInView();
 };
 

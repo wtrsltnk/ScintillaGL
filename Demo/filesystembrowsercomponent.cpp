@@ -4,7 +4,7 @@
 #include "font-utils.hpp"
 #include <glad/glad.h>
 
-const int browserItemHeight = 30;
+const int browserItemHeight = 24;
 
 FileSystemBrowserComponent::FileSystemBrowserComponent(
     std::unique_ptr<Font> &font)
@@ -16,25 +16,26 @@ bool FileSystemBrowserComponent::init(
 {
     _origin = origin;
 
-    tabItemMargin.Bottom = tabItemMargin.Top = 4;
-    tabItemMargin.Left = tabItemMargin.Right = 4;
+    margin.Bottom = margin.Top = 2;
+    margin.Left = margin.Right = 4;
 
-    tabItemPadding.Bottom = tabItemPadding.Top = 2;
-    tabItemPadding.Left = tabItemPadding.Right = 10;
+    padding.Bottom = padding.Top = 2;
+    padding.Left = padding.Right = 10;
 
-    _browserScrollBarFrom = std::make_shared<ScrollBarComponent>();
-    _browserScrollBarFrom->init(glm::vec2(_origin.x, _origin.y));
+    _scrollBar = std::make_shared<ScrollBarComponent>();
+    _scrollBar->init(glm::vec2(_origin.x, _origin.y));
 
-    _browserScrollBarFrom->resize(int(_origin.x), int(_origin.y), _width, _height);
+    _scrollBar->resize(int(_origin.x), int(_origin.y), _width, _height);
 
-    _browserScrollBarFrom->onScrollY = [&](int diff) {
-        auto a = (_totalBrowserLines / float(_height));
+    _scrollBar->onScrollY = [&](int diff) {
+        auto a = float(_totalBrowserLines) / float(_height);
         auto amount = float(diff * a);
         ScrollY(amount);
     };
-    _browserScrollBarFrom->getScrollInfo = [&](float &start, float &length) {
-        start = _browserTopLine / float(_totalBrowserLines);
-        length = ListItemsInView() / float(_totalBrowserLines);
+
+    _scrollBar->getScrollInfo = [&](float &start, float &length) {
+        start = float(_browserTopLine) / float(_totalBrowserLines);
+        length = float(ListItemsInView()) / float(_totalBrowserLines);
     };
 
     return true;
@@ -60,12 +61,12 @@ void FileSystemBrowserComponent::RenderListItem(
 
     DrawTextBase(
         _font,
-        border.left + tabItemPadding.Left,
-        border.top + tabItemPadding.Top + 20.0f,
+        border.left + padding.Left,
+        border.top + padding.Top + 20.0f,
         text,
         textFore);
 
-    y = border.bottom + tabItemMargin.Bottom;
+    y = border.bottom;
 }
 
 void FileSystemBrowserComponent::render(
@@ -98,7 +99,7 @@ void FileSystemBrowserComponent::render(
     auto files = FileSystem.GetFiles(_relativePathToOpenFolder);
 
     float x = _origin.x;
-    float y = _origin.y - (_browserTopLine * (tabItemMargin.Top + browserItemHeight + tabItemMargin.Bottom));
+    float y = _origin.y - (int(_browserTopLine) * ItemHeightWithMarginAndPadding());
 
     double plane[][4] = {
         {1, 0, 0, -_origin.x},
@@ -151,7 +152,7 @@ void FileSystemBrowserComponent::render(
     glDisable(GL_CLIP_PLANE2);
     glDisable(GL_CLIP_PLANE3);
 
-    _browserScrollBarFrom->render(inputState);
+    _scrollBar->render(inputState);
 }
 
 void FileSystemBrowserComponent::resize(
@@ -181,7 +182,7 @@ void FileSystemBrowserComponent::resize(
         y = int(_origin.y);
     }
 
-    _browserScrollBarFrom->resize(x, y, _width, _height);
+    _scrollBar->resize(x, y, _width, _height);
 }
 
 bool FileSystemBrowserComponent::handleMouseButtonInput(
@@ -198,7 +199,7 @@ bool FileSystemBrowserComponent::handleMouseButtonInput(
 
     if (event.type == SDL_MOUSEBUTTONDOWN)
     {
-        if (_browserScrollBarFrom->handleMouseButtonInput(event, inputState))
+        if (_scrollBar->handleMouseButtonInput(event, inputState))
         {
             return true;
         }
@@ -207,7 +208,7 @@ bool FileSystemBrowserComponent::handleMouseButtonInput(
         auto files = FileSystem.GetFiles(_relativePathToOpenFolder);
 
         float x = _origin.x;
-        float y = _origin.y - (_browserTopLine * (tabItemMargin.Top + browserItemHeight + tabItemMargin.Bottom));
+        float y = _origin.y - (int(_browserTopLine) * ItemHeightWithMarginAndPadding());
 
         if (!_relativePathToOpenFolder.empty())
         {
@@ -220,28 +221,28 @@ bool FileSystemBrowserComponent::handleMouseButtonInput(
                 return true;
             }
 
-            y = rect.bottom + tabItemMargin.Bottom;
+            y = rect.bottom;
         }
 
         for (auto &folder : folders)
         {
             scr::Rectangle rect = GetBorderRectangleForFile(x, y);
 
-            if (rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
+            if (event.button == SDL_BUTTON_LEFT && rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
             {
                 _relativePathToOpenFolder = folder.string();
 
                 return true;
             }
 
-            y = rect.bottom + tabItemMargin.Bottom;
+            y = rect.bottom;
         }
 
         for (auto &file : files)
         {
             scr::Rectangle rect = GetBorderRectangleForFile(x, y);
 
-            if (rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
+            if (event.button == SDL_BUTTON_LEFT && rect.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)))
             {
                 auto fullPath = FileSystem.GetFullPath(file.string());
 
@@ -253,13 +254,13 @@ bool FileSystemBrowserComponent::handleMouseButtonInput(
                 return true;
             }
 
-            y = rect.bottom + tabItemMargin.Bottom;
+            y = rect.bottom;
         }
     }
 
     if (event.type == SDL_MOUSEBUTTONUP)
     {
-        if (_browserScrollBarFrom->handleMouseButtonInput(event, inputState))
+        if (_scrollBar->handleMouseButtonInput(event, inputState))
         {
             return true;
         }
@@ -280,7 +281,7 @@ bool FileSystemBrowserComponent::handleMouseMotionInput(
         return false;
     }
 
-    if (_browserScrollBarFrom->handleMouseMotionInput(event, inputState))
+    if (_scrollBar->handleMouseMotionInput(event, inputState))
     {
         return true;
     }
@@ -300,12 +301,12 @@ bool FileSystemBrowserComponent::handleMouseWheel(
         return false;
     }
 
-    if (_browserScrollBarFrom->handleMouseWheel(event, inputState))
+    if (_scrollBar->handleMouseWheel(event, inputState))
     {
         return true;
     }
 
-    ScrollY((event.y / glm::abs(event.y)) * 10);
+    ScrollY((event.y / glm::abs(event.y)) * 10.0f);
 
     return false;
 }
@@ -313,6 +314,12 @@ bool FileSystemBrowserComponent::handleMouseWheel(
 void FileSystemBrowserComponent::ScrollY(
     float amount)
 {
+    if (_totalBrowserLines <= ListItemsInView())
+    {
+        _browserTopLine = 0;
+        return;
+    }
+
     _browserTopLine -= amount;
 
     if (_browserTopLine < 0)
@@ -320,11 +327,9 @@ void FileSystemBrowserComponent::ScrollY(
         _browserTopLine = 0;
     }
 
-    auto maxLines = _totalBrowserLines;
-
-    if (_browserTopLine >= maxLines)
+    if (_browserTopLine >= _totalBrowserLines - ListItemsInView())
     {
-        _browserTopLine = maxLines;
+        _browserTopLine = _totalBrowserLines - ListItemsInView();
     }
 }
 
@@ -334,17 +339,22 @@ scr::Rectangle FileSystemBrowserComponent::GetBorderRectangleForFile(
 {
     scr::Rectangle rect;
 
-    rect.top = y + tabItemMargin.Top;
+    rect.top = y + margin.Top;
     rect.left = _origin.x;
     rect.right = _origin.x + _width;
-    rect.bottom = rect.top + browserItemHeight + tabItemPadding.Top + tabItemPadding.Bottom;
+    rect.bottom = y + ItemHeightWithMarginAndPadding();
 
     return rect;
 }
 
+float FileSystemBrowserComponent::ItemHeightWithMarginAndPadding()
+{
+    return float(margin.Top + padding.Top + browserItemHeight + padding.Bottom + margin.Bottom);
+}
+
 int FileSystemBrowserComponent::ListItemsInView()
 {
-    return int(float(_height) / float(tabItemMargin.Top + browserItemHeight + tabItemMargin.Bottom));
+    return int(glm::floor(float(_height) / ItemHeightWithMarginAndPadding()));
 }
 
 bool FileSystemBrowserComponent::handleKeyDown(
