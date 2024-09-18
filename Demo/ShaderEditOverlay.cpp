@@ -46,11 +46,14 @@ void ShaderEditOverlay::initialise(int w, int h)
     localFont = std::make_unique<Font>();
     localFont->Create(fp);
 
+    localIconFont = std::make_unique<Font>();
+    localIconFont->SetID((void *)&iconFont);
+
     _menu = std::make_shared<MenuComponent>(localFont);
     _components.push_back(_menu);
     _menu->init(wouterMenu, glm::vec2(0.0f));
 
-    _editors = std::make_shared<SplitterComponent>(localFont);
+    _editors = std::make_shared<SplitterComponent>(localFont, localIconFont);
     _components.push_back(_editors);
     _editors->init(glm::vec2(0.0f, _menu->height()), 0.3f, true);
 
@@ -112,6 +115,16 @@ void ShaderEditOverlay::handleKeyDown(
     const SDL_KeyboardEvent &event)
 {
     UpdateMods(event);
+
+    switch (event.keysym.sym)
+    {
+        case SDLK_f:
+            if (_inputState.alt)
+            {
+                return;
+            }
+            break;
+    }
 
     if (IComponent::componentWithKeyboardFocus != nullptr)
     {
@@ -190,7 +203,7 @@ void ShaderEditOverlay::handleMouseButtonInput(
     {
         if (auto component = componentPtr.lock())
         {
-            if (component->handleMouseButtonInput(event, _inputState)) return;
+            component->handleMouseButtonInput(event, _inputState);
         }
     }
 }
@@ -205,7 +218,7 @@ void ShaderEditOverlay::handleMouseMotionInput(
     {
         if (auto component = componentPtr.lock())
         {
-            if (component->handleMouseMotionInput(event, _inputState)) return;
+            component->handleMouseMotionInput(event, _inputState);
         }
     }
 }

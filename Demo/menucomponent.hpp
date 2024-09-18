@@ -14,7 +14,10 @@ public:
     MenuComponent(std::unique_ptr<Font> &font);
     virtual ~MenuComponent() = default;
 
-    bool init(const std::vector<LocalMenuItem> &menuItems, const glm::vec2 &origin);
+    bool init(
+        const std::vector<LocalMenuItem> &menuItems,
+        const glm::vec2 &origin,
+        scr::Direction direction = scr::Direction::Horizontal);
 
     virtual void render(const struct InputState &inputState);
     virtual void resize(int x, int y, int w, int h);

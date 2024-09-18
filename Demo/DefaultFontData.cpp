@@ -1,3 +1,4 @@
+// clang-format off
 //This is Anonymous Pro font available at http://www.ms-studio.com/FontSales/anonymouspro.html under Open Font License
 
 unsigned char anonymousProRTTF[158080] = {

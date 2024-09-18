@@ -29,6 +29,7 @@ public:
     void loadContent(const std::string &content);
 
     void tick() { mMainEditor.Tick(); }
+    bool isUnTouched();
 
     std::filesystem::path openFile;
     std::string title;

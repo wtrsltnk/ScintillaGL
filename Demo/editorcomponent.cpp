@@ -115,6 +115,11 @@ void EditorComponent::loadContent(
     mMainEditor.Command(SCI_GOTOPOS, 0);
 }
 
+bool EditorComponent::isUnTouched()
+{
+    return !mMainEditor.Command(SCI_CANUNDO);
+}
+
 bool EditorComponent::init(
     const glm::vec2 &origin)
 {

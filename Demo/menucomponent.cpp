@@ -25,6 +25,7 @@ void DrawTextBase(
     glBindTexture(GL_TEXTURE_2D, realFont->ftex);
     glColor4fv((GLfloat *)&fore);
     glBegin(GL_QUADS);
+
     float x = xbase, y = ybase;
     const char *s = text.c_str();
     int len = text.size();
@@ -63,7 +64,13 @@ float WidthText(
     while (len--)
     {
         int advance, leftBearing;
+        if (realFont->fontinfo.data == nullptr)
+        {
+            return position;
+        }
+
         stbtt_GetCodepointHMetrics(&realFont->fontinfo, *s++, &advance, &leftBearing);
+
         position += advance * realFont->scale; // TODO: +Kerning
     }
     return position;
@@ -71,10 +78,14 @@ float WidthText(
 
 MenuComponent::MenuComponent(std::unique_ptr<Font> &font) : _font(font) {}
 
-bool MenuComponent::init(const std::vector<LocalMenuItem> &menuItems, const glm::vec2 &origin)
+bool MenuComponent::init(
+    const std::vector<LocalMenuItem> &menuItems,
+    const glm::vec2 &origin,
+    scr::Direction direction)
 {
     _menuItems = menuItems;
     _origin = origin;
+    _direction = direction;
 
     menuItemMargin.Bottom = menuItemMargin.Top = 4;
     menuItemMargin.Left = menuItemMargin.Right = 8;
@@ -85,8 +96,14 @@ bool MenuComponent::init(const std::vector<LocalMenuItem> &menuItems, const glm:
     return true;
 }
 
-void MenuComponent::render(const struct InputState &inputState)
+void MenuComponent::render(
+    const struct InputState &inputState)
 {
+    glDisable(GL_CLIP_PLANE0);
+    glDisable(GL_CLIP_PLANE1);
+    glDisable(GL_CLIP_PLANE2);
+    glDisable(GL_CLIP_PLANE3);
+
     float x = _origin.x;
     float y = _origin.y;
     glm::vec4 textFore = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);

@@ -7,13 +7,20 @@
 #include <glad/glad.h>
 #include <sstream>
 
-const int tabBarHeight = 45;
+const int tabBarHeight = 40;
+const char HamburgerButtonText[] = {32, 0};
+const char BackButtonText[] = {33, 0};
+const char NextButtonText[] = {34, 0};
+const char CloseButtonText[] = {35, 0};
+const char AddFileButtonText[] = {36, 0};
+const char AddFolderButtonText[] = {37, 0};
 
 glm::vec4 textFore = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 TabbedEditorsComponent::TabbedEditorsComponent(
-    std::unique_ptr<Font> &font)
-    : _font(font)
+    std::unique_ptr<Font> &font,
+    std::unique_ptr<Font> &iconFont)
+    : _font(font), _iconFont(iconFont)
 {
 }
 
@@ -23,9 +30,11 @@ bool TabbedEditorsComponent::init(
     _origin = origin;
 
     tabMargin.Bottom = tabMargin.Top = 4;
-    tabMargin.Left = tabMargin.Right = 4;
+    tabMargin.Left = 0;
+    tabMargin.Right = 2;
 
-    tabPadding.Bottom = tabPadding.Top = 2;
+    tabPadding.Bottom = 0;
+    tabPadding.Top = 2;
     tabPadding.Left = tabPadding.Right = 10;
 
     fileSystemBrowser = std::make_shared<FileSystemBrowserComponent>(_font);
@@ -73,8 +82,8 @@ void TabbedEditorsComponent::loadFile(
     buffer << t.rdbuf();
 
     auto editorLayer = std::make_shared<EditorComponent>();
-    editorLayer->init(glm::vec2(_origin.x, _origin.y + tabBarHeight));
-    editorLayer->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
+    editorLayer->init(glm::vec2(_origin.x, _origin.y + TabRowHeight()));
+    editorLayer->resize(_origin.x, _origin.y + TabRowHeight(), _width, _height - TabRowHeight());
 
     editorLayer->openFile = std::filesystem::path(fileName);
     editorLayer->title = editorLayer->openFile.filename().generic_string();
@@ -87,8 +96,8 @@ void TabbedEditorsComponent::newTab(
     bool switchTo)
 {
     auto editorLayer = std::make_shared<EditorComponent>();
-    editorLayer->init(glm::vec2(_origin.x, _origin.y + tabBarHeight));
-    editorLayer->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
+    editorLayer->init(glm::vec2(_origin.x, _origin.y + TabRowHeight()));
+    editorLayer->resize(_origin.x, _origin.y + TabRowHeight(), _width, _height - TabRowHeight());
 
     editorLayer->title = "empty.c";
     tabs.push_back(std::move(editorLayer));
@@ -113,6 +122,11 @@ void TabbedEditorsComponent::closeTab(
     {
         _activeTab--;
     }
+
+    if (tabs.empty())
+    {
+        newTab(true);
+    }
 }
 
 void TabbedEditorsComponent::RenderTab(
@@ -131,13 +145,6 @@ void TabbedEditorsComponent::RenderTab(
         hover = false;
     }
 
-    // auto dragAmount = inputState.mouseX - _draggingStartX;
-
-    // if (!isActiveTab || !_draggingTab)
-    // {
-    //     dragAmount = 0;
-    // }
-
     auto alpha = isActiveTab ? 1.0f : (hover ? 0.6f : 0.4f);
 
     scr::FillQuad({0.2f, 0.2f, 0.2f, alpha}, border);
@@ -149,7 +156,36 @@ void TabbedEditorsComponent::RenderTab(
         text,
         textFore);
 
-    x = border.right;
+    x = border.right + tabMargin.Right;
+}
+
+void TabbedEditorsComponent::RenderIconButton(
+    const struct InputState &inputState,
+    const std::string &text,
+    float &x,
+    float &y)
+{
+    auto border = GetBorderSquare(text, x, y);
+
+    bool hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
+
+    if (!isHit(glm::vec2(inputState.mouseX, inputState.mouseY)))
+    {
+        hover = false;
+    }
+
+    auto alpha = hover ? 0.6f : 0.0f;
+
+    scr::FillQuad({0.2f, 0.2f, 0.2f, alpha}, border);
+
+    DrawTextBase(
+        _iconFont,
+        border.left + tabMargin.Left + tabPadding.Left,
+        border.top + tabMargin.Top + tabPadding.Top + 20.0f,
+        text,
+        textFore);
+
+    x = border.right + tabMargin.Right;
 }
 
 void TabbedEditorsComponent::render(
@@ -157,11 +193,32 @@ void TabbedEditorsComponent::render(
 {
     (void)inputState;
 
+    if (_closeHamburgerMenu)
+    {
+        hamburgerMenu = nullptr;
+        _closeHamburgerMenu = false;
+    }
+
     float x = _origin.x;
     float y = _origin.y;
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    RenderIconButton(inputState, HamburgerButtonText, x, y);
+
+    if (!tabs.empty())
+    {
+        RenderIconButton(inputState, BackButtonText, x, y);
+
+        RenderIconButton(inputState, NextButtonText, x, y);
+    }
+    else
+    {
+        RenderIconButton(inputState, AddFileButtonText, x, y);
+
+        RenderIconButton(inputState, AddFolderButtonText, x, y);
+    }
 
     if (!tabs.empty())
     {
@@ -192,6 +249,11 @@ void TabbedEditorsComponent::render(
     {
         fileSystemBrowser->render(inputState);
     }
+
+    if (hamburgerMenu != nullptr)
+    {
+        hamburgerMenu->render(inputState);
+    }
 }
 
 void TabbedEditorsComponent::resize(
@@ -221,11 +283,11 @@ void TabbedEditorsComponent::resize(
         y = _origin.y;
     }
 
-    fileSystemBrowser->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
+    fileSystemBrowser->resize(_origin.x, _origin.y + TabRowHeight(), _width, _height - TabRowHeight());
 
     for (const auto &tab : tabs)
     {
-        tab->resize(_origin.x, _origin.y + tabBarHeight, _width, _height - tabBarHeight);
+        tab->resize(_origin.x, _origin.y + TabRowHeight(), _width, _height - TabRowHeight());
     }
 }
 
@@ -245,6 +307,7 @@ bool TabbedEditorsComponent::handleKeyDown(
 
                 return true;
             }
+            break;
         case SDLK_F4:
         {
             if (inputState.ctrl)
@@ -321,8 +384,15 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
     (void)event;
     (void)inputState;
 
+    if (hamburgerMenu != nullptr && hamburgerMenu->handleMouseButtonInput(event, inputState))
+    {
+        return true;
+    }
+
     if (!isHit(glm::vec2(event.x, event.y)))
     {
+        hamburgerMenu = nullptr;
+
         return false;
     }
 
@@ -336,7 +406,61 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
 
     if (event.type == SDL_MOUSEBUTTONDOWN)
     {
-        float x = _origin.x, y = _origin.y;
+        hamburgerMenu = nullptr;
+
+        float x = _origin.x;
+        float y = _origin.y;
+
+        auto btn = GetBorderSquare(HamburgerButtonText, x, y);
+
+        if (btn.Contains(glm::vec2(event.x, event.y)))
+        {
+            std::vector<LocalMenuItem> HamburgerMenuItems = {
+                LocalMenuItem("Close all tabs"),
+                LocalMenuItem("+"),
+            };
+
+            HamburgerMenuItems[0].action = [&]() {
+                tabs.clear();
+                _closeHamburgerMenu = true;
+            };
+
+            HamburgerMenuItems[1].action = [&]() {
+                newTab(true);
+                _closeHamburgerMenu = true;
+            };
+
+            hamburgerMenu = std::make_shared<MenuComponent>(_font);
+            hamburgerMenu->init(HamburgerMenuItems, glm::vec2(btn.left, btn.bottom), scr::Direction::Vertical);
+            hamburgerMenu->resize(btn.left, btn.bottom, _width, _height);
+
+            _closeHamburgerMenu = false;
+
+            return true;
+        }
+
+        x = btn.right + tabMargin.Right;
+
+        if (!tabs.empty())
+        {
+            auto backBtn = GetBorderSquare(BackButtonText, x, y);
+
+            x = backBtn.right + tabMargin.Right;
+
+            auto nextBtn = GetBorderSquare(NextButtonText, x, y);
+
+            x = nextBtn.right + tabMargin.Right;
+        }
+        else
+        {
+            auto addFileBtn = GetBorderSquare(AddFileButtonText, x, y);
+
+            x = addFileBtn.right + tabMargin.Right;
+
+            auto addFolderBtn = GetBorderSquare(AddFolderButtonText, x, y);
+
+            x = addFolderBtn.right + tabMargin.Right;
+        }
 
         for (size_t i = 0; i < tabs.size(); i++)
         {
@@ -361,7 +485,7 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
                 }
             }
 
-            x = border.right;
+            x = border.right + tabMargin.Right;
         }
     }
 
@@ -384,6 +508,11 @@ bool TabbedEditorsComponent::handleMouseMotionInput(
 {
     (void)event;
     (void)inputState;
+
+    if (hamburgerMenu != nullptr && hamburgerMenu->handleMouseMotionInput(event, inputState))
+    {
+        return true;
+    }
 
     if (inputState.leftMouseDown && _draggingTab)
     {
@@ -437,6 +566,13 @@ bool TabbedEditorsComponent::handleMouseWheel(
     return false;
 }
 
+float TabbedEditorsComponent::TabRowHeight() const
+{
+    return tabMargin.Top + tabPadding.Top // Left margin and padding
+           + tabBarHeight                 // This is the tab height
+           + tabPadding.Bottom;           // Right padding
+}
+
 scr::Rectangle TabbedEditorsComponent::GetBorderRectangle(
     const std::string &text,
     float &x,
@@ -447,14 +583,36 @@ scr::Rectangle TabbedEditorsComponent::GetBorderRectangle(
     scr::Rectangle border;
 
     border.top = y + tabMargin.Top;
-    border.bottom = y + tabMargin.Top + tabPadding.Top      // Left margin and padding
-                    + tabBarHeight                          // This is the tab height
-                    + tabPadding.Bottom + tabMargin.Bottom; // Right padding and margin
+    border.bottom = y + tabMargin.Top + tabPadding.Top // Left margin and padding
+                    + tabBarHeight                     // This is the tab height
+                    + tabPadding.Bottom;               // Right padding
 
     border.left = x + tabMargin.Left;
-    border.right = x + tabMargin.Left + tabPadding.Left  // Left margin and padding
-                   + width                               // This is the text with
-                   + tabPadding.Right + tabMargin.Right; // Right padding and margin
+    border.right = x + tabMargin.Left + tabPadding.Left // Left margin and padding
+                   + width                              // This is the text with
+                   + tabPadding.Right;                  // Right padding
+
+    return border;
+}
+
+scr::Rectangle TabbedEditorsComponent::GetBorderSquare(
+    const std::string &text,
+    float &x,
+    float &y)
+{
+    float width = tabBarHeight * 0.5; // WidthText(_iconFont, text);
+
+    scr::Rectangle border;
+
+    border.top = y + tabMargin.Top;
+    border.bottom = y + tabMargin.Top + tabPadding.Top // Left margin and padding
+                    + tabBarHeight                     // This is the button height
+                    + tabPadding.Bottom;               // Right padding
+
+    border.left = x + tabMargin.Left;
+    border.right = x + tabMargin.Left + tabPadding.Left // Left margin and padding
+                   + width                              // This is the text with
+                   + tabPadding.Right;                  // Right padding
 
     return border;
 }

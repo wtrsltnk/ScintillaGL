@@ -5,8 +5,9 @@
 const int splitterSize = 8;
 
 SplitterComponent::SplitterComponent(
-    std::unique_ptr<Font> &font)
-    : _font(font)
+    std::unique_ptr<Font> &font,
+    std::unique_ptr<Font> &iconFont)
+    : _font(font), _iconFont(iconFont)
 {
 }
 
@@ -23,10 +24,10 @@ bool SplitterComponent::init(
         _splitAt = splitAt;
         _verticalSplitting = vertical;
 
-        _panel1 = std::make_shared<SplitterComponent>(_font);
+        _panel1 = std::make_shared<SplitterComponent>(_font, _iconFont);
         _panel1->init(_origin);
 
-        _panel2 = std::make_shared<SplitterComponent>(_font);
+        _panel2 = std::make_shared<SplitterComponent>(_font, _iconFont);
         _panel2->init(_origin);
     }
     else
@@ -35,7 +36,7 @@ bool SplitterComponent::init(
 
         if (_editor == nullptr)
         {
-            _editor = std::make_shared<TabbedEditorsComponent>(_font);
+            _editor = std::make_shared<TabbedEditorsComponent>(_font, _iconFont);
         }
 
         _editor->init(_origin);
@@ -79,11 +80,14 @@ void SplitterComponent::render(
 
         scr::FillQuad({0.5f, 0.5f, 0.5f, alpha1}, rect1);
 
-        auto rect2 = GetAddSplitButtonRect2();
+        if (!_editor->tabs.empty())
+        {
+            auto rect2 = GetAddSplitButtonRect2();
 
-        auto alpha2 = rect2.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)) ? 1.0f : 0.0f;
+            auto alpha2 = rect2.Contains(glm::vec2(inputState.mouseX, inputState.mouseY)) ? 1.0f : 0.0f;
 
-        scr::FillQuad({0.5f, 0.5f, 0.5f, alpha2}, rect2);
+            scr::FillQuad({0.5f, 0.5f, 0.5f, alpha2}, rect2);
+        }
     }
     else
     {
@@ -345,7 +349,7 @@ bool SplitterComponent::handleMouseButtonInput(
             return true;
         }
 
-        if (_editor != nullptr && GetAddSplitButtonRect2().Contains(glm::vec2(event.x, event.y)))
+        if (_editor != nullptr && !_editor->tabs.empty() && GetAddSplitButtonRect2().Contains(glm::vec2(event.x, event.y)))
         {
             _isAddingSplit = 2;
 
@@ -377,7 +381,16 @@ void SplitterComponent::CollapsePanel1()
     if (_panel1->_editor != nullptr)
     {
         _editor = _panel2->_editor;
-        _panel2->_editor->tabs.insert(_panel2->_editor->tabs.begin(), _panel1->_editor->tabs.begin(), _panel1->_editor->tabs.end());
+        for (auto &tab : _panel1->_editor->tabs)
+        {
+            if (tab->isUnTouched())
+            {
+                continue;
+            }
+
+            _panel2->_editor->tabs.insert(_panel2->_editor->tabs.begin(), tab);
+        }
+
         _panel1 = nullptr;
         _panel2 = nullptr;
     }
@@ -397,7 +410,15 @@ void SplitterComponent::CollapsePanel2()
     if (_panel1->_editor != nullptr)
     {
         _editor = _panel1->_editor;
-        _panel1->_editor->tabs.insert(_panel1->_editor->tabs.end(), _panel2->_editor->tabs.begin(), _panel2->_editor->tabs.end());
+        for (auto &tab : _panel2->_editor->tabs)
+        {
+            if (tab->isUnTouched())
+            {
+                continue;
+            }
+
+            _panel1->_editor->tabs.insert(_panel2->_editor->tabs.begin(), tab);
+        }
 
         _panel1 = nullptr;
         _panel2 = nullptr;
@@ -419,11 +440,19 @@ void SplitterComponent::AddVerticalSplit(
     _splitAt = glm::abs(_origin.x - mouse.x) / float(_width);
     _verticalSplitting = true;
 
-    _panel1 = std::make_shared<SplitterComponent>(_font);
+    _panel1 = std::make_shared<SplitterComponent>(_font, _iconFont);
     _panel1->init(_origin, 0.0f, false, _isAddingSplit == 1 ? _editor : nullptr);
+    if (_isAddingSplit != 1)
+    {
+        _panel1->_editor->newTab();
+    }
 
-    _panel2 = std::make_shared<SplitterComponent>(_font);
+    _panel2 = std::make_shared<SplitterComponent>(_font, _iconFont);
     _panel2->init(_origin, 0.0f, false, _isAddingSplit == 2 ? _editor : nullptr);
+    if (_isAddingSplit != 2)
+    {
+        _panel2->_editor->newTab();
+    }
 
     _editor = nullptr;
 
@@ -441,10 +470,10 @@ void SplitterComponent::AddHorizontalSplit(
     _splitAt = glm::abs(_origin.y - mouse.y) / float(_height);
     _verticalSplitting = false;
 
-    _panel1 = std::make_shared<SplitterComponent>(_font);
+    _panel1 = std::make_shared<SplitterComponent>(_font, _iconFont);
     _panel1->init(_origin, 0.0f, false, _isAddingSplit == 1 ? _editor : nullptr);
 
-    _panel2 = std::make_shared<SplitterComponent>(_font);
+    _panel2 = std::make_shared<SplitterComponent>(_font, _iconFont);
     _panel2->init(_origin, 0.0f, false, _isAddingSplit == 2 ? _editor : nullptr);
 
     _editor = nullptr;

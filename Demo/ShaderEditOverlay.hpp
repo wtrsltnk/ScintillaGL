@@ -11,6 +11,7 @@
 #include <vector>
 
 extern struct stbtt_Font defaultFont;
+extern struct stbtt_Font iconFont;
 
 class ShaderEditOverlay
 {
@@ -33,6 +34,7 @@ public:
 
 private:
     std::unique_ptr<class Font> localFont;
+    std::unique_ptr<class Font> localIconFont;
 
     float _width = 0.0f;
     float _height = 0.0f;

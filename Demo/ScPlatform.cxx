@@ -75,7 +75,7 @@ namespace platform
 #include <winuser.h>
 #include <wtypes.h>
 
-HWND hClipWnd; //Clipboard window
+HWND hClipWnd; // Clipboard window
 CLIPFORMAT cfColumnSelect;
 CLIPFORMAT cfLineSelect;
 
@@ -327,8 +327,8 @@ int SurfaceImpl::LogPixelsY()
 float SurfaceImpl::DeviceHeightFont(float points)
 {
     int logPix = LogPixelsY();
-    auto res =  (points * logPix + logPix / 2) / 72.0f;
-return res;
+    auto res = (points * logPix + logPix / 2) / 72.0f;
+    return res;
 }
 
 void SurfaceImpl::MoveTo(float x_, float y_)
@@ -486,8 +486,6 @@ void SurfaceImpl::Ellipse(PRectangle /*rc*/, Colour /*fore*/, Colour /*back*/)
 
 const int maxLengthTextRun = 10000;
 
-
-
 Font::Font() : fid(0)
 {
 }
@@ -497,6 +495,10 @@ Font::~Font()
 }
 
 stbtt_Font defaultFont;
+stbtt_Font iconFont;
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 namespace platform
 {
@@ -511,13 +513,26 @@ namespace platform
         glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, bmp);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-        //TODO: Crash if uncomment previous line - need further investigation
         free(bmp);
+
+        unsigned char *iconbmp = (unsigned char *)malloc(1024 * 512);
+
+        stbtt_BakeFontBitmap(icon_font, 0, 18.0, iconbmp, 512, 512, 65, 6, iconFont.cdata); // no guarantee this fits!
+
+        stbi_write_png("file.png", 512, 512, 1, iconbmp, 0);
+
+        glGenTextures(1, &iconFont.ftex);
+        glBindTexture(GL_TEXTURE_2D, iconFont.ftex);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 512, 512, 0, GL_ALPHA, GL_UNSIGNED_BYTE, iconbmp);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+        free(iconbmp);
     }
 
     void ShutdownFontSubsytem()
     {
         glDeleteTextures(1, &defaultFont.ftex);
+        glDeleteTextures(1, &iconFont.ftex);
     }
 } // namespace platform
 
@@ -578,9 +593,9 @@ void SurfaceImpl::DrawTextBase(
 {
     stbtt_Font *realFont = (stbtt_Font *)font_.GetID();
     glEnable(GL_TEXTURE_2D);
-    //glEnable(GL_BLEND);
-    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    // assume orthographic projection with units = screen pixels, origin at top left
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //  assume orthographic projection with units = screen pixels, origin at top left
     glBindTexture(GL_TEXTURE_2D, realFont->ftex);
     glColor3ubv((GLubyte *)&fore);
     glBegin(GL_QUADS);
@@ -590,8 +605,8 @@ void SurfaceImpl::DrawTextBase(
         if (*s >= 32 && *s < 128)
         {
             stbtt_aligned_quad q;
-            stbtt_GetBakedQuad(realFont->cdata, 512, 512, *s - 32, &x, &y, &q, 1); //1=opengl,0=old d3d
-            //x = floor(x);
+            stbtt_GetBakedQuad(realFont->cdata, 512, 512, *s - 32, &x, &y, &q, 1); // 1=opengl,0=old d3d
+            // x = floor(x);
             glTexCoord2f(q.s0, q.t0);
             glVertex2f(q.x0, q.y0);
             glTexCoord2f(q.s1, q.t0);
@@ -605,7 +620,7 @@ void SurfaceImpl::DrawTextBase(
     }
     glEnd();
     glDisable(GL_TEXTURE_2D);
-    //glDisable(GL_BLEND);
+    // glDisable(GL_BLEND);
 }
 
 void SurfaceImpl::DrawTextNoClip(
@@ -650,7 +665,7 @@ void SurfaceImpl::MeasureWidths(
     float *positions)
 {
     stbtt_Font *realFont = (stbtt_Font *)font_.GetID();
-    //TODO: implement proper UTF-8 handling
+    // TODO: implement proper UTF-8 handling
     float position = 0;
     while (len--)
     {
@@ -658,7 +673,7 @@ void SurfaceImpl::MeasureWidths(
 
         stbtt_GetCodepointHMetrics(&realFont->fontinfo, *s++, &advance, &leftBearing);
 
-        position += advance; //TODO: +Kerning
+        position += advance; // TODO: +Kerning
         *positions++ = position * realFont->scale;
     }
 }
@@ -669,13 +684,13 @@ float SurfaceImpl::WidthText(
     int len)
 {
     stbtt_Font *realFont = (stbtt_Font *)font_.GetID();
-    //TODO: implement proper UTF-8 handling
+    // TODO: implement proper UTF-8 handling
     float position = 0;
     while (len--)
     {
         int advance, leftBearing;
         stbtt_GetCodepointHMetrics(&realFont->fontinfo, *s++, &advance, &leftBearing);
-        position += advance * realFont->scale; //TODO: +Kerning
+        position += advance * realFont->scale; // TODO: +Kerning
     }
     return position;
 }
@@ -711,14 +726,14 @@ float SurfaceImpl::Descent(
 float SurfaceImpl::InternalLeading(
     Font &)
 {
-    //WTF is this?????
+    // WTF is this?????
     return 0;
 }
 
 float SurfaceImpl::ExternalLeading(
     Font &font_)
 {
-    //WTF is this?????
+    // WTF is this?????
     stbtt_Font *realFont = (stbtt_Font *)font_.GetID();
     int ascent, descent, lineGap;
     stbtt_GetFontVMetrics(&realFont->fontinfo, &ascent, &descent, &lineGap);
@@ -750,7 +765,7 @@ void SurfaceImpl::SetClip(
     glClipPlane(GL_CLIP_PLANE1, plane[1]);
     glClipPlane(GL_CLIP_PLANE2, plane[2]);
     glClipPlane(GL_CLIP_PLANE3, plane[3]);
-    //assert(0);
+    // assert(0);
 }
 
 void SurfaceImpl::FlushCachedState() {}

@@ -9,7 +9,9 @@
 class SplitterComponent : public IComponent
 {
 public:
-    SplitterComponent(std::unique_ptr<Font> &font);
+    SplitterComponent(
+        std::unique_ptr<Font> &font,
+        std::unique_ptr<Font> &iconFont);
 
     bool init(
         const glm::vec2 &origin,
@@ -31,6 +33,7 @@ public:
 
 private:
     std::unique_ptr<Font> &_font;
+    std::unique_ptr<Font> &_iconFont;
     std::shared_ptr<TabbedEditorsComponent> _editor;
     std::shared_ptr<SplitterComponent> _panel1;
     std::shared_ptr<SplitterComponent> _panel2;

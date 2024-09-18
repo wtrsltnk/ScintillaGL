@@ -4,6 +4,7 @@
 #include "editorcomponent.hpp"
 #include "filesystembrowsercomponent.hpp"
 #include "icomponent.hpp"
+#include "menucomponent.hpp"
 #include "screen-utils.hpp"
 #include <filesystem>
 #include <memory>
@@ -12,7 +13,10 @@
 class TabbedEditorsComponent : public IComponent
 {
 public:
-    TabbedEditorsComponent(std::unique_ptr<Font> &font);
+    TabbedEditorsComponent(
+        std::unique_ptr<Font> &font,
+        std::unique_ptr<Font> &iconFont);
+
     virtual ~TabbedEditorsComponent() = default;
 
     bool init(const glm::vec2 &origin);
@@ -42,14 +46,22 @@ public:
     std::shared_ptr<IComponent> switchedFrom;
     std::shared_ptr<FileSystemBrowserComponent> fileSystemBrowser;
     std::vector<std::shared_ptr<EditorComponent>> tabs;
+    std::shared_ptr<MenuComponent> hamburgerMenu;
 
 private:
     std::unique_ptr<Font> &_font;
+    std::unique_ptr<Font> &_iconFont;
     size_t _activeTab = 0;
     bool _draggingTab = false;
     int _draggingStartX = 0;
+    bool _closeHamburgerMenu = false;
 
     scr::Rectangle GetBorderRectangle(
+        const std::string &text,
+        float &x,
+        float &y);
+
+    scr::Rectangle GetBorderSquare(
         const std::string &text,
         float &x,
         float &y);
@@ -60,6 +72,14 @@ private:
         float &x,
         float &y,
         bool isActiveTab);
+
+    void RenderIconButton(
+        const struct InputState &inputState,
+        const std::string &text,
+        float &x,
+        float &y);
+
+    float TabRowHeight() const;
 };
 
 #endif // TABBEDEDITORSLAYER_HPP

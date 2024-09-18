@@ -24,6 +24,7 @@ target_sources(Demo
         "font-utils.hpp"
         "icomponent.cpp"
         "icomponent.hpp"
+        "icon-font.cpp"
         "menucomponent.cpp"
         "menucomponent.hpp"
         "screen-utils.cpp"
@@ -61,4 +62,5 @@ target_link_libraries(Demo
         winmm.lib
         opengl32.lib
         imm32.lib
+        httpclient
 )

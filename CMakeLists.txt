@@ -2,6 +2,8 @@
 
 include(cmake/CPM.cmake)
 
+CPMAddPackage("gh:nlohmann/json@3.10.5")
+
 CPMAddPackage(
     NAME glm
     GITHUB_REPOSITORY g-truc/glm
@@ -16,6 +18,12 @@ CPMAddPackage(
         "SDL_SHARED Off"
 )
 
+CPMAddPackage(
+    NAME mbedtls
+    GITHUB_REPOSITORY Mbed-TLS/mbedtls
+    GIT_TAG v3.6.1
+)
+
 project(ScintillaGL VERSION "0.1.0")
 
 add_library(ScintillaGL INTERFACE
@@ -25,3 +33,4 @@ add_library(ScintillaGL INTERFACE
 
 add_subdirectory(scintilla)
 add_subdirectory(Demo)
+add_subdirectory(httpclient)

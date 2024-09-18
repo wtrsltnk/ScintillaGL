@@ -11,12 +11,8 @@
 #include <sstream>
 #include <stdio.h>
 
-static ShaderEditOverlay app;
-
 void Platform_Initialise(HWND hWnd);
 void Platform_Finalise();
-
-int w = 1024, h = 768;
 
 int main(
     int argc,
@@ -39,6 +35,8 @@ int main(
     std::stringstream ss;
 
     ss << "ScintillaGL - " << root.string();
+
+    int w = 1024, h = 768;
 
     auto window = SDL_CreateWindow(ss.str().c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
     if (window == 0)
@@ -91,6 +89,8 @@ int main(
 
     Platform_Initialise(systemInfo.info.win.window);
 
+    ShaderEditOverlay app;
+
     app.initialise(w, h);
 
     Scintilla_LinkLexers();
@@ -98,6 +98,7 @@ int main(
     bool run = true;
 
     bool needRender = false;
+
     while (run)
     {
         SDL_Event E;
