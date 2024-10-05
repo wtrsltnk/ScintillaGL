@@ -96,7 +96,9 @@ public:
     }
 };
 
-EditorComponent::EditorComponent()
+EditorComponent::EditorComponent(
+    const std::unique_ptr<FileRunnerService> &fileRunnerService)
+    : _fileRunnerService(fileRunnerService)
 {
     mLexer = std::make_unique<LexState>(mMainEditor.GetDocument());
     mMainEditor.SetLexer(mLexer.get());
@@ -105,14 +107,32 @@ EditorComponent::EditorComponent()
 void EditorComponent::loadContent(
     const std::string &content)
 {
-    mMainEditor.Command(SCI_CANCEL);
-    mMainEditor.Command(SCI_CLEARALL);
-    mMainEditor.Command(SCI_SETUNDOCOLLECTION, 0);
-    mMainEditor.Command(SCI_ADDTEXT, content.size() - 1, reinterpret_cast<uptr_t>(content.data()));
-    mMainEditor.Command(SCI_SETUNDOCOLLECTION, 1);
-    mMainEditor.Command(SCI_EMPTYUNDOBUFFER);
-    mMainEditor.Command(SCI_SETSAVEPOINT);
-    mMainEditor.Command(SCI_GOTOPOS, 0);
+    std::lock_guard<std::mutex> lk(_contentLoadMutex);
+    _contentToLoad = content;
+}
+
+void runThread(
+    EditorComponent *thiz,
+    const std::string &title,
+    const std::string &content)
+{
+    auto res = thiz->_fileRunnerService->Execute(title, content);
+
+    std::lock_guard<std::mutex> lk(thiz->_contentLoadMutex);
+    thiz->_contentToLoad = res;
+}
+
+void EditorComponent::loadContentAsync(
+    const std::string &title,
+    const std::string &content)
+{
+    std::thread t(runThread, this, title, content);
+    t.detach();
+}
+
+std::string EditorComponent::getContent()
+{
+    return std::string(mMainEditor.GetDocument()->BufferPointer());
 }
 
 bool EditorComponent::isUnTouched()
@@ -146,6 +166,22 @@ bool EditorComponent::init(
 void EditorComponent::render(
     const struct InputState &inputState)
 {
+    {
+        std::lock_guard<std::mutex> lk(_contentLoadMutex);
+        if (!_contentToLoad.empty())
+        {
+            mMainEditor.Command(SCI_CANCEL);
+            mMainEditor.Command(SCI_CLEARALL);
+            mMainEditor.Command(SCI_SETUNDOCOLLECTION, 0);
+            mMainEditor.Command(SCI_EMPTYUNDOBUFFER);
+            mMainEditor.Command(SCI_ADDTEXT, _contentToLoad.size() - 1, reinterpret_cast<uptr_t>(_contentToLoad.data()));
+            mMainEditor.Command(SCI_SETUNDOCOLLECTION, 1);
+            mMainEditor.Command(SCI_SETSAVEPOINT);
+            mMainEditor.Command(SCI_GOTOPOS, 0);
+            _contentToLoad.clear();
+        }
+    }
+
     (void)inputState;
 
     glEnable(GL_BLEND);
@@ -274,7 +310,10 @@ bool EditorComponent::handleKeyDown(
             sciKey = 0;
             break;
         default:
+        {
             sciKey = event.keysym.sym;
+            break;
+        }
     }
 
     if (sciKey)

@@ -7,6 +7,7 @@
 #include "menucomponent.hpp"
 #include "screen-utils.hpp"
 #include <filesystem>
+#include <list>
 #include <memory>
 #include <vector>
 
@@ -14,6 +15,7 @@ class TabbedEditorsComponent : public IComponent
 {
 public:
     TabbedEditorsComponent(
+        const std::unique_ptr<FileRunnerService> &fileRunnerService,
         std::unique_ptr<Font> &font,
         std::unique_ptr<Font> &iconFont);
 
@@ -37,7 +39,8 @@ public:
     void loadFile(
         const std::filesystem::path &fileName);
 
-    void newTab(
+    std::shared_ptr<EditorComponent> newTab(
+        const std::string &title,
         bool switchTo = true);
 
     void closeTab(
@@ -55,6 +58,7 @@ public:
     std::shared_ptr<MenuComponent> hamburgerMenu;
 
 private:
+    const std::unique_ptr<FileRunnerService> &_fileRunnerService;
     std::unique_ptr<Font> &_font;
     std::unique_ptr<Font> &_iconFont;
     size_t _activeTab = 0;

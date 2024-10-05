@@ -5,13 +5,17 @@
 #include "scrollbarcomponent.hpp"
 #include <filesystem>
 #include <glm/glm.hpp>
+#include <mutex>
 
 #include "EditorEx.hpp"
+#include "filerunnerservice.hpp"
 
 class EditorComponent : public IComponent
 {
 public:
-    EditorComponent();
+    EditorComponent(
+        const std::unique_ptr<FileRunnerService> &fileRunnerService);
+
     virtual ~EditorComponent() = default;
 
     bool init(const glm::vec2 &origin);
@@ -26,7 +30,14 @@ public:
     virtual bool handleMouseMotionInput(const SDL_MouseMotionEvent &event, const struct InputState &inputState);
     virtual bool handleMouseWheel(const SDL_MouseWheelEvent &event, const struct InputState &inputState);
 
-    void loadContent(const std::string &content);
+    void loadContent(
+        const std::string &content);
+
+    void loadContentAsync(
+        const std::string &title,
+        const std::string &content);
+
+    std::string getContent();
 
     void tick() { mMainEditor.Tick(); }
     bool isUnTouched();
@@ -35,14 +46,22 @@ public:
     std::string title;
 
 private:
+    const std::unique_ptr<FileRunnerService> &_fileRunnerService;
     ScrollBarComponent _scrollBarLayer;
     EditorEx mMainEditor;
+    std::mutex _contentLoadMutex;
+    std::string _contentToLoad;
 
     int _fontSize = 20;
 
     std::unique_ptr<class LexState> mLexer;
 
     void initialiseShaderEditor();
+
+    friend void runThread(
+        EditorComponent *thiz,
+        const std::string &title,
+        const std::string &content);
 };
 
 #endif // EDITORLAYER_HPP

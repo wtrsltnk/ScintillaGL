@@ -21,20 +21,20 @@ int main(
     int argc,
     char *argv[])
 {
-    HttpClient client;
+    //     HttpClient client;
 
-    auto request = std::make_shared<StringContent>(R"({
-  "model": "llama3.2",
-  "messages": [
-    { "role": "user", "content": "why is the sky blue?" }
-  ]
-})");
+    //     auto request = std::make_shared<StringContent>(R"({
+    //   "model": "mistral",
+    //   "messages": [
+    //     { "role": "user", "content": "why is the sky blue?" }
+    //   ]
+    // })");
 
-    auto response = client.Post("http://localhost:11434/api/generate", request);
+    //     auto response = client.Post("http://localhost:11434/api/generate", request);
 
-    auto str = response->Content->ReadAsString();
+    //     auto str = response->Content->ReadAsString();
 
-    std::cout << str << std::endl;
+    //     std::cout << str << std::endl;
 
     std::filesystem::path root = std::filesystem::current_path();
 

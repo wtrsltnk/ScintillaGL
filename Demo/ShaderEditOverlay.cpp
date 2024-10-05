@@ -6,7 +6,10 @@
 
 #include "Platform.h"
 
-ShaderEditOverlay::ShaderEditOverlay() = default;
+ShaderEditOverlay::ShaderEditOverlay()
+{
+    _fileRunnerService = std::make_unique<FileRunnerService>();
+}
 
 ShaderEditOverlay::~ShaderEditOverlay() = default;
 
@@ -53,7 +56,7 @@ void ShaderEditOverlay::initialise(int w, int h)
     _components.push_back(_menu);
     _menu->init(wouterMenu, glm::vec2(0.0f));
 
-    _editors = std::make_shared<SplitterComponent>(localFont, localIconFont);
+    _editors = std::make_shared<SplitterComponent>(_fileRunnerService, localFont, localIconFont);
     _components.push_back(_editors);
     _editors->init(glm::vec2(0.0f, _menu->height()), 0.3f, true);
 
@@ -63,7 +66,7 @@ void ShaderEditOverlay::initialise(int w, int h)
 
     if (editor != nullptr)
     {
-        editor->newTab(true);
+        editor->newTab("empty.c", true);
     }
 }
 

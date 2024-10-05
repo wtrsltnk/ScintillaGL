@@ -19,9 +19,10 @@ glm::vec4 textFore = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 glm::vec4 textForeDisabled = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
 
 TabbedEditorsComponent::TabbedEditorsComponent(
+    const std::unique_ptr<FileRunnerService> &fileRunnerService,
     std::unique_ptr<Font> &font,
     std::unique_ptr<Font> &iconFont)
-    : _font(font), _iconFont(iconFont)
+    : _fileRunnerService(fileRunnerService), _font(font), _iconFont(iconFont)
 {
 }
 
@@ -83,7 +84,7 @@ void TabbedEditorsComponent::loadFile(
     std::ifstream t(fileName.c_str());
     buffer << t.rdbuf();
 
-    auto editorLayer = std::make_shared<EditorComponent>();
+    auto editorLayer = std::make_shared<EditorComponent>(_fileRunnerService);
     editorLayer->init(glm::vec2(_origin.x, _origin.y + TabRowHeight()));
     editorLayer->resize(_origin.x, _origin.y + TabRowHeight(), _width, _height - TabRowHeight());
 
@@ -96,20 +97,23 @@ void TabbedEditorsComponent::loadFile(
     SelectActiveTab(tabs.size() - 1);
 }
 
-void TabbedEditorsComponent::newTab(
+std::shared_ptr<EditorComponent> TabbedEditorsComponent::newTab(
+    const std::string &title,
     bool switchTo)
 {
-    auto editorLayer = std::make_shared<EditorComponent>();
+    auto editorLayer = std::make_shared<EditorComponent>(_fileRunnerService);
     editorLayer->init(glm::vec2(_origin.x, _origin.y + TabRowHeight()));
     editorLayer->resize(_origin.x, _origin.y + TabRowHeight(), _width, _height - TabRowHeight());
-    editorLayer->title = "empty.c";
+    editorLayer->title = title;
 
-    tabs.push_back(std::move(editorLayer));
+    tabs.push_back(editorLayer);
 
     if (switchTo)
     {
         SelectActiveTab(tabs.size() - 1);
     }
+
+    return editorLayer;
 }
 
 void TabbedEditorsComponent::closeTab(
@@ -150,7 +154,7 @@ void TabbedEditorsComponent::closeTab(
 
     if (tabs.empty())
     {
-        newTab(true);
+        newTab("empty.c", true);
     }
 }
 
@@ -395,7 +399,7 @@ bool TabbedEditorsComponent::handleKeyDown(
             {
                 if (inputState.ctrl)
                 {
-                    newTab(true);
+                    newTab("empty.c", true);
 
                     return true;
                 }
@@ -455,6 +459,19 @@ bool TabbedEditorsComponent::handleKeyUp(
     }
     else if (!tabs.empty() && tabs.size() > _activeTab)
     {
+        if (event.keysym.sym == SDLK_x && inputState.alt)
+        {
+            auto activeTab = tabs[_activeTab];
+
+            std::stringstream ss;
+            ss << activeTab->title << " - response";
+            auto addedTab = newTab(ss.str());
+
+            addedTab->loadContentAsync(activeTab->title, activeTab->getContent());
+
+            return true;
+        }
+
         return tabs[_activeTab]->handleKeyUp(event, inputState);
     }
 
@@ -524,7 +541,8 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
         {
             std::vector<LocalMenuItem> HamburgerMenuItems = {
                 LocalMenuItem("Close all tabs"),
-                LocalMenuItem("+"),
+                LocalMenuItem("Add c-file"),
+                LocalMenuItem("Add http-file"),
             };
 
             HamburgerMenuItems[0].action = [&]() {
@@ -533,7 +551,12 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
             };
 
             HamburgerMenuItems[1].action = [&]() {
-                newTab(true);
+                newTab("empty.c", true);
+                _closeHamburgerMenu = true;
+            };
+
+            HamburgerMenuItems[2].action = [&]() {
+                newTab("empty.http", true);
                 _closeHamburgerMenu = true;
             };
 

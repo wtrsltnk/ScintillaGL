@@ -11,6 +11,8 @@ public:
 
     std::shared_ptr<HttpResponseMessage> Send(
         const std::shared_ptr<HttpRequestMessage> &request);
+
+private:
 };
 
 #endif // HTTPMESSAGEHANDLER_HPP

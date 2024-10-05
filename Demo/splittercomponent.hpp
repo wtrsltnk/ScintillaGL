@@ -10,6 +10,7 @@ class SplitterComponent : public IComponent
 {
 public:
     SplitterComponent(
+        const std::unique_ptr<FileRunnerService> &fileRunnerService,
         std::unique_ptr<Font> &font,
         std::unique_ptr<Font> &iconFont);
 
@@ -32,6 +33,7 @@ public:
     std::shared_ptr<TabbedEditorsComponent> &ActiveEditor();
 
 private:
+    const std::unique_ptr<FileRunnerService> &_fileRunnerService;
     std::unique_ptr<Font> &_font;
     std::unique_ptr<Font> &_iconFont;
     std::shared_ptr<TabbedEditorsComponent> _editor;

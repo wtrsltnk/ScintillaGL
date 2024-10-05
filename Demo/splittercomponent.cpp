@@ -5,9 +5,10 @@
 const int splitterSize = 8;
 
 SplitterComponent::SplitterComponent(
+    const std::unique_ptr<FileRunnerService> &fileRunnerService,
     std::unique_ptr<Font> &font,
     std::unique_ptr<Font> &iconFont)
-    : _font(font), _iconFont(iconFont)
+    : _fileRunnerService(fileRunnerService), _font(font), _iconFont(iconFont)
 {
 }
 
@@ -24,10 +25,10 @@ bool SplitterComponent::init(
         _splitAt = splitAt;
         _verticalSplitting = vertical;
 
-        _panel1 = std::make_shared<SplitterComponent>(_font, _iconFont);
+        _panel1 = std::make_shared<SplitterComponent>(_fileRunnerService, _font, _iconFont);
         _panel1->init(_origin);
 
-        _panel2 = std::make_shared<SplitterComponent>(_font, _iconFont);
+        _panel2 = std::make_shared<SplitterComponent>(_fileRunnerService, _font, _iconFont);
         _panel2->init(_origin);
     }
     else
@@ -36,7 +37,7 @@ bool SplitterComponent::init(
 
         if (_editor == nullptr)
         {
-            _editor = std::make_shared<TabbedEditorsComponent>(_font, _iconFont);
+            _editor = std::make_shared<TabbedEditorsComponent>(_fileRunnerService, _font, _iconFont);
         }
 
         _editor->init(_origin);
@@ -440,18 +441,18 @@ void SplitterComponent::AddVerticalSplit(
     _splitAt = glm::abs(_origin.x - mouse.x) / float(_width);
     _verticalSplitting = true;
 
-    _panel1 = std::make_shared<SplitterComponent>(_font, _iconFont);
+    _panel1 = std::make_shared<SplitterComponent>(_fileRunnerService, _font, _iconFont);
     _panel1->init(_origin, 0.0f, false, _isAddingSplit == 1 ? _editor : nullptr);
     if (_isAddingSplit != 1)
     {
-        _panel1->_editor->newTab();
+        _panel1->_editor->newTab("empty.c");
     }
 
-    _panel2 = std::make_shared<SplitterComponent>(_font, _iconFont);
+    _panel2 = std::make_shared<SplitterComponent>(_fileRunnerService, _font, _iconFont);
     _panel2->init(_origin, 0.0f, false, _isAddingSplit == 2 ? _editor : nullptr);
     if (_isAddingSplit != 2)
     {
-        _panel2->_editor->newTab();
+        _panel2->_editor->newTab("empty.c");
     }
 
     _editor = nullptr;
@@ -470,10 +471,10 @@ void SplitterComponent::AddHorizontalSplit(
     _splitAt = glm::abs(_origin.y - mouse.y) / float(_height);
     _verticalSplitting = false;
 
-    _panel1 = std::make_shared<SplitterComponent>(_font, _iconFont);
+    _panel1 = std::make_shared<SplitterComponent>(_fileRunnerService, _font, _iconFont);
     _panel1->init(_origin, 0.0f, false, _isAddingSplit == 1 ? _editor : nullptr);
 
-    _panel2 = std::make_shared<SplitterComponent>(_font, _iconFont);
+    _panel2 = std::make_shared<SplitterComponent>(_fileRunnerService, _font, _iconFont);
     _panel2->init(_origin, 0.0f, false, _isAddingSplit == 2 ? _editor : nullptr);
 
     _editor = nullptr;

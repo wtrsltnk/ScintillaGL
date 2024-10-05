@@ -33,6 +33,7 @@ public:
     void renderFullscreen();
 
 private:
+    std::unique_ptr<FileRunnerService> _fileRunnerService;
     std::unique_ptr<class Font> localFont;
     std::unique_ptr<class Font> localIconFont;
 
