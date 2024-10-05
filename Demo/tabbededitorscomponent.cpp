@@ -16,6 +16,7 @@ const char AddFileButtonText[] = {36, 0};
 const char AddFolderButtonText[] = {37, 0};
 
 glm::vec4 textFore = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+glm::vec4 textForeDisabled = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
 
 TabbedEditorsComponent::TabbedEditorsComponent(
     std::unique_ptr<Font> &font,
@@ -49,6 +50,7 @@ bool TabbedEditorsComponent::init(
             if (switchedFromEditor != nullptr)
             {
                 switchedFromEditor->loadFile(fullPath.generic_string());
+                IComponent::componentWithKeyboardFocus = switchedFrom;
             }
             else
             {
@@ -71,7 +73,7 @@ void TabbedEditorsComponent::loadFile(
     {
         if (tabs[i]->openFile == fileName)
         {
-            _activeTab = i;
+            SelectActiveTab(i);
             return;
         }
     }
@@ -88,8 +90,10 @@ void TabbedEditorsComponent::loadFile(
     editorLayer->openFile = std::filesystem::path(fileName);
     editorLayer->title = editorLayer->openFile.filename().generic_string();
     editorLayer->loadContent(buffer.str());
-    _activeTab = tabs.size();
+
     tabs.push_back(std::move(editorLayer));
+
+    SelectActiveTab(tabs.size() - 1);
 }
 
 void TabbedEditorsComponent::newTab(
@@ -98,13 +102,13 @@ void TabbedEditorsComponent::newTab(
     auto editorLayer = std::make_shared<EditorComponent>();
     editorLayer->init(glm::vec2(_origin.x, _origin.y + TabRowHeight()));
     editorLayer->resize(_origin.x, _origin.y + TabRowHeight(), _width, _height - TabRowHeight());
-
     editorLayer->title = "empty.c";
+
     tabs.push_back(std::move(editorLayer));
 
     if (switchTo)
     {
-        _activeTab = tabs.size() - 1;
+        SelectActiveTab(tabs.size() - 1);
     }
 }
 
@@ -116,9 +120,30 @@ void TabbedEditorsComponent::closeTab(
         return;
     }
 
-    tabs.erase(std::next(tabs.begin(), index));
+    if (index == 0)
+    {
+        tabs.erase(tabs.begin());
+    }
+    else
+    {
+        tabs.erase(std::next(tabs.begin(), index));
+    }
 
-    if (_activeTab >= index)
+    // Make sure all indices in the history are still valid
+    for (size_t i = 0; i < _activeTabHistory.size(); i++)
+    {
+        if (_activeTabHistory[i] == index)
+        {
+            _activeTabHistory.erase(_activeTabHistory.begin() + i);
+            i--;
+        }
+        else if (_activeTabHistory[i] > index)
+        {
+            _activeTabHistory[i]--;
+        }
+    }
+
+    if (_activeTab >= index && _activeTab > 0)
     {
         _activeTab--;
     }
@@ -126,6 +151,41 @@ void TabbedEditorsComponent::closeTab(
     if (tabs.empty())
     {
         newTab(true);
+    }
+}
+
+void TabbedEditorsComponent::nextTab()
+{
+    if (_activeTabHistory.empty() || _traverseBackOnTabHistory == 0) return;
+
+    _traverseBackOnTabHistory--;
+
+    _activeTab = _activeTabHistory[_activeTabHistory.size() - 1 - _traverseBackOnTabHistory];
+}
+
+void TabbedEditorsComponent::prevTab()
+{
+    if (_activeTabHistory.empty()) return;
+
+    _traverseBackOnTabHistory++;
+
+    if (_traverseBackOnTabHistory > _activeTabHistory.size() - 1)
+    {
+        _traverseBackOnTabHistory = _activeTabHistory.size() - 1;
+    }
+
+    _activeTab = _activeTabHistory[_activeTabHistory.size() - 1 - _traverseBackOnTabHistory];
+}
+
+void TabbedEditorsComponent::finishTabSwitch()
+{
+    if (_traverseBackOnTabHistory != 0)
+    {
+        _activeTabHistory.erase(std::next(_activeTabHistory.end(), -int(_traverseBackOnTabHistory + 1)));
+
+        SelectActiveTab(_activeTab);
+
+        _traverseBackOnTabHistory = 0;
     }
 }
 
@@ -146,8 +206,9 @@ void TabbedEditorsComponent::RenderTab(
     }
 
     auto alpha = isActiveTab ? 1.0f : (hover ? 0.6f : 0.4f);
+    auto gray = 0.2f;
 
-    scr::FillQuad({0.2f, 0.2f, 0.2f, alpha}, border);
+    scr::FillQuad({gray, gray, _controlMode ? 0.3f : gray, alpha}, border);
 
     DrawTextBase(
         _font,
@@ -163,9 +224,11 @@ void TabbedEditorsComponent::RenderIconButton(
     const struct InputState &inputState,
     const std::string &text,
     float &x,
-    float &y)
+    float &y,
+    int mode)
 {
     auto border = GetBorderSquare(text, x, y);
+    auto iconWidth = WidthIcon(_iconFont, text);
 
     bool hover = border.Contains(glm::vec2(inputState.mouseX, inputState.mouseY));
 
@@ -175,15 +238,21 @@ void TabbedEditorsComponent::RenderIconButton(
     }
 
     auto alpha = hover ? 0.6f : 0.0f;
+    auto gray = 0.2f;
 
-    scr::FillQuad({0.2f, 0.2f, 0.2f, alpha}, border);
+    if (mode == 2)
+    {
+        alpha = 1.0f;
+    }
+
+    scr::FillQuad({gray, gray, _controlMode ? 0.3f : gray, alpha}, border);
 
     DrawTextBase(
         _iconFont,
-        border.left + tabMargin.Left + tabPadding.Left,
+        border.left + tabMargin.Left + tabPadding.Left + (((tabBarHeight * 0.6) - iconWidth) / 2.0f),
         border.top + tabMargin.Top + tabPadding.Top + 20.0f,
         text,
-        textFore);
+        mode == 1 ? textForeDisabled : textFore);
 
     x = border.right + tabMargin.Right;
 }
@@ -209,9 +278,9 @@ void TabbedEditorsComponent::render(
 
     if (!tabs.empty())
     {
-        RenderIconButton(inputState, BackButtonText, x, y);
+        RenderIconButton(inputState, BackButtonText, x, y, _activeTab == 0);
 
-        RenderIconButton(inputState, NextButtonText, x, y);
+        RenderIconButton(inputState, NextButtonText, x, y, _activeTab == tabs.size() - 1);
     }
     else
     {
@@ -238,6 +307,14 @@ void TabbedEditorsComponent::render(
             bool isActiveTab = tabs[_activeTab] == tab;
 
             RenderTab(inputState, tab->title, x, y, isActiveTab);
+
+            if (isActiveTab)
+            {
+                x -= tabMargin.Left;
+                x -= tabMargin.Right;
+                x -= tabPadding.Left;
+                RenderIconButton(inputState, CloseButtonText, x, y, 2);
+            }
         }
 
         if (!tabs.empty() && tabs.size() > _activeTab)
@@ -298,24 +375,9 @@ bool TabbedEditorsComponent::handleKeyDown(
     (void)event;
     (void)inputState;
 
-    switch (event.keysym.sym)
+    if (event.keysym.sym == SDLK_LCTRL || event.keysym.sym == SDLK_RCTRL)
     {
-        case SDLK_n:
-            if (inputState.ctrl)
-            {
-                newTab(true);
-
-                return true;
-            }
-            break;
-        case SDLK_F4:
-        {
-            if (inputState.ctrl)
-            {
-                closeTab(_activeTab);
-            }
-            break;
-        }
+        _controlMode = true;
     }
 
     if (tabs.empty())
@@ -327,6 +389,43 @@ bool TabbedEditorsComponent::handleKeyDown(
     }
     else if (!tabs.empty() && tabs.size() > _activeTab)
     {
+        switch (event.keysym.sym)
+        {
+            case SDLK_n:
+            {
+                if (inputState.ctrl)
+                {
+                    newTab(true);
+
+                    return true;
+                }
+                break;
+            }
+            case SDLK_TAB:
+            {
+                if (_controlMode)
+                {
+                    if (inputState.shift)
+                    {
+                        nextTab();
+                    }
+                    else
+                    {
+                        prevTab();
+                    }
+                }
+                break;
+            }
+            case SDLK_F4:
+            {
+                if (inputState.ctrl)
+                {
+                    closeTab(_activeTab);
+                }
+                break;
+            }
+        }
+
         return tabs[_activeTab]->handleKeyDown(event, inputState);
     }
 
@@ -339,6 +438,13 @@ bool TabbedEditorsComponent::handleKeyUp(
 {
     (void)event;
     (void)inputState;
+
+    if (event.keysym.sym == SDLK_LCTRL || event.keysym.sym == SDLK_RCTRL)
+    {
+        finishTabSwitch();
+
+        _controlMode = false;
+    }
 
     if (tabs.empty())
     {
@@ -410,10 +516,11 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
 
         float x = _origin.x;
         float y = _origin.y;
+        auto mouse = glm::vec2(event.x, event.y);
 
         auto btn = GetBorderSquare(HamburgerButtonText, x, y);
 
-        if (btn.Contains(glm::vec2(event.x, event.y)))
+        if (btn.Contains(mouse))
         {
             std::vector<LocalMenuItem> HamburgerMenuItems = {
                 LocalMenuItem("Close all tabs"),
@@ -445,9 +552,23 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
         {
             auto backBtn = GetBorderSquare(BackButtonText, x, y);
 
+            if (backBtn.Contains(mouse))
+            {
+                SelectActiveTab(_activeTab - 1);
+
+                return true;
+            }
+
             x = backBtn.right + tabMargin.Right;
 
             auto nextBtn = GetBorderSquare(NextButtonText, x, y);
+
+            if (nextBtn.Contains(mouse))
+            {
+                SelectActiveTab(_activeTab + 1);
+
+                return true;
+            }
 
             x = nextBtn.right + tabMargin.Right;
         }
@@ -455,9 +576,21 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
         {
             auto addFileBtn = GetBorderSquare(AddFileButtonText, x, y);
 
+            if (addFileBtn.Contains(mouse))
+            {
+
+                return true;
+            }
+
             x = addFileBtn.right + tabMargin.Right;
 
             auto addFolderBtn = GetBorderSquare(AddFolderButtonText, x, y);
+
+            if (addFolderBtn.Contains(mouse))
+            {
+
+                return true;
+            }
 
             x = addFolderBtn.right + tabMargin.Right;
         }
@@ -467,11 +600,11 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
             const auto &tab = tabs[i];
             auto border = GetBorderRectangle(tab->title, x, y);
 
-            if (border.Contains(glm::vec2(event.x, event.y)))
+            if (border.Contains(mouse))
             {
                 if (event.button == SDL_BUTTON_LEFT)
                 {
-                    _activeTab = i;
+                    SelectActiveTab(i);
 
                     _draggingTab = true;
                     _draggingStartX = event.x;
@@ -486,6 +619,24 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
             }
 
             x = border.right + tabMargin.Right;
+
+            if (tabs[_activeTab] == tab)
+            {
+                x -= tabMargin.Left;
+                x -= tabMargin.Right;
+                x -= tabPadding.Left;
+
+                auto closeTabBtn = GetBorderSquare(CloseButtonText, x, y);
+
+                if (closeTabBtn.Contains(mouse))
+                {
+                    closeTab(i);
+
+                    return true;
+                }
+
+                x = closeTabBtn.right + tabMargin.Right;
+            }
         }
     }
 
@@ -566,6 +717,19 @@ bool TabbedEditorsComponent::handleMouseWheel(
     return false;
 }
 
+void TabbedEditorsComponent::SelectActiveTab(
+    size_t tabIndex)
+{
+    if (tabIndex >= tabs.size())
+    {
+        return;
+    }
+
+    _activeTab = tabIndex;
+
+    _activeTabHistory.push_back(tabIndex);
+}
+
 float TabbedEditorsComponent::TabRowHeight() const
 {
     return tabMargin.Top + tabPadding.Top // Left margin and padding
@@ -600,7 +764,7 @@ scr::Rectangle TabbedEditorsComponent::GetBorderSquare(
     float &x,
     float &y)
 {
-    float width = tabBarHeight * 0.5; // WidthText(_iconFont, text);
+    float width = tabBarHeight * 0.6; // WidthText(_iconFont, text);
 
     scr::Rectangle border;
 

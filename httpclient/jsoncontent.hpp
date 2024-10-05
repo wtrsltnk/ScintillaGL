@@ -13,10 +13,10 @@ public:
     virtual ~JsonContent();
 
 protected:
-    virtual std::shared_ptr<std::istream> OnCreateContentReadStream();
+    const std::vector<std::byte> &Stream();
 
 private:
-    std::shared_ptr<struct imemstream> _stream;
+    std::vector<std::byte> _stream;
 };
 
 #endif // JSONCONTENT_HPP

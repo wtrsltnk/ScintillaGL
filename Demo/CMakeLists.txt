@@ -59,8 +59,9 @@ target_link_libraries(Demo
         glm
         SDL2-static
         scintilla
+        tinycc
+        httpclient
         winmm.lib
         opengl32.lib
         imm32.lib
-        httpclient
 )

@@ -17,6 +17,10 @@ float WidthText(
     std::unique_ptr<Font> &font_,
     const std::string &text);
 
+float WidthIcon(
+    std::unique_ptr<Font> &font_,
+    const std::string &text);
+
 extern glm::vec4 textFore;
 
 #endif // FONT_UTILS_HPP

@@ -24,6 +24,31 @@ CPMAddPackage(
     GIT_TAG v3.6.1
 )
 
+CPMAddPackage(
+    NAME tinycc
+    GITHUB_REPOSITORY TinyCC/tinycc
+    GIT_TAG release_0_9_27
+    DOWNLOAD_ONLY YES
+)
+
+if (tinycc_ADDED)
+    file(WRITE "${tinycc_BINARY_DIR}/config.h"
+        "#define TCC_VERSION \"0.9.27\"\n"
+    )
+
+    add_library(tinycc
+        "${tinycc_SOURCE_DIR}/libtcc.c"
+        "${tinycc_SOURCE_DIR}/libtcc.h"
+    )
+
+    target_include_directories(tinycc
+        PUBLIC
+            "${tinycc_BINARY_DIR}"
+            # "${tinycc_SOURCE_DIR}/include"
+    )
+
+endif()
+
 project(ScintillaGL VERSION "0.1.0")
 
 add_library(ScintillaGL INTERFACE
@@ -31,6 +56,6 @@ add_library(ScintillaGL INTERFACE
     TODO.md
 )
 
+add_subdirectory(httpclient)
 add_subdirectory(scintilla)
 add_subdirectory(Demo)
-add_subdirectory(httpclient)

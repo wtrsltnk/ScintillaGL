@@ -43,6 +43,12 @@ public:
     void closeTab(
         size_t index);
 
+    void nextTab();
+
+    void prevTab();
+
+    void finishTabSwitch();
+
     std::shared_ptr<IComponent> switchedFrom;
     std::shared_ptr<FileSystemBrowserComponent> fileSystemBrowser;
     std::vector<std::shared_ptr<EditorComponent>> tabs;
@@ -55,6 +61,12 @@ private:
     bool _draggingTab = false;
     int _draggingStartX = 0;
     bool _closeHamburgerMenu = false;
+    bool _controlMode = false;
+
+    std::vector<size_t> _activeTabHistory;
+    size_t _traverseBackOnTabHistory = 0;
+    void SelectActiveTab(
+        size_t tabIndex);
 
     scr::Rectangle GetBorderRectangle(
         const std::string &text,
@@ -77,7 +89,8 @@ private:
         const struct InputState &inputState,
         const std::string &text,
         float &x,
-        float &y);
+        float &y,
+        int mode = 0);
 
     float TabRowHeight() const;
 };

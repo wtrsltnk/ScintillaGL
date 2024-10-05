@@ -23,7 +23,8 @@ target_sources(httpclient
       "httpstatuscode.hpp"
       "jsoncontent.cpp"
       "jsoncontent.hpp"
-      "imemstream.cpp"
+      "stringcontent.cpp"
+      "stringcontent.hpp"
 )
 
 target_compile_features(httpclient
@@ -33,12 +34,13 @@ target_compile_features(httpclient
 )
 
 target_include_directories(httpclient
-    PRIVATE
-        "include"
+    PUBLIC
+        "."
 )
 
 target_link_libraries(httpclient
     PRIVATE
         nlohmann_json::nlohmann_json
         mbedtls
+        Wininet
 )

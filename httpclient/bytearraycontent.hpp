@@ -3,6 +3,8 @@
 
 #include "httpcontent.hpp"
 
+#include <vector>
+
 class ByteArrayContent : public HttpContent
 {
 public:
@@ -17,10 +19,10 @@ public:
     virtual ~ByteArrayContent();
 
 protected:
-    virtual std::shared_ptr<std::istream> OnCreateContentReadStream();
+    const std::vector<std::byte> &Stream();
 
-private:
-    std::shared_ptr<struct imemstream> _stream;
+protected:
+    std::vector<std::byte> _stream;
 };
 
 #endif // BYTEARRAYCONTENT_HPP

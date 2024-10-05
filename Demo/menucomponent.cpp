@@ -76,6 +76,26 @@ float WidthText(
     return position;
 }
 
+float WidthIcon(
+    std::unique_ptr<Font> &font_,
+    const std::string &text)
+{
+    float x = 0, y = 0;
+    const char *s = text.c_str();
+    int len = text.size();
+    stbtt_Font *realFont = (stbtt_Font *)font_->GetID();
+
+    float position = 0;
+    while (len--)
+    {
+        stbtt_aligned_quad q;
+        stbtt_GetBakedQuad(realFont->cdata, 512, 512, *s - 32, &x, &y, &q, 1);
+
+        position += (q.x1 - q.x0); // TODO: +Kerning
+    }
+    return position;
+}
+
 MenuComponent::MenuComponent(std::unique_ptr<Font> &font) : _font(font) {}
 
 bool MenuComponent::init(
