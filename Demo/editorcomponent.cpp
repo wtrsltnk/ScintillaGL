@@ -174,7 +174,7 @@ void EditorComponent::render(
             mMainEditor.Command(SCI_CLEARALL);
             mMainEditor.Command(SCI_SETUNDOCOLLECTION, 0);
             mMainEditor.Command(SCI_EMPTYUNDOBUFFER);
-            mMainEditor.Command(SCI_ADDTEXT, _contentToLoad.size() - 1, reinterpret_cast<uptr_t>(_contentToLoad.data()));
+            mMainEditor.Command(SCI_ADDTEXT, _contentToLoad.size(), reinterpret_cast<uptr_t>(_contentToLoad.data()));
             mMainEditor.Command(SCI_SETUNDOCOLLECTION, 1);
             mMainEditor.Command(SCI_SETSAVEPOINT);
             mMainEditor.Command(SCI_GOTOPOS, 0);

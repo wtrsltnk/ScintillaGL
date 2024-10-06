@@ -18,13 +18,12 @@ std::string GetHost(
 
     std::string url_new = url.substr(found + 3); // url_new is the url excluding the http part
     size_t found1 = url_new.find_first_of(":");
-    std::string host = url_new.substr(0, found1);
+    if (found1 == std::string::npos)
+    {
+        found1 = url_new.find_first_of("/");
+    }
 
-    size_t found2 = url_new.find_first_of("/");
-    std::string port = url_new.substr(found1 + 1, found2 - found1 - 1);
-    std::string path = url_new.substr(found2);
-
-    return host;
+    return url_new.substr(0, found1);
 }
 
 std::string GetPath(
@@ -34,14 +33,20 @@ std::string GetPath(
     std::string protocol = url.substr(0, found);
 
     std::string url_new = url.substr(found + 3); // url_new is the url excluding the http part
-    size_t found1 = url_new.find_first_of(":");
-    std::string host = url_new.substr(0, found1);
 
     size_t found2 = url_new.find_first_of("/");
-    std::string port = url_new.substr(found1 + 1, found2 - found1 - 1);
+
     std::string path = url_new.substr(found2);
 
     return path;
+}
+
+bool is_number(const std::string &s)
+{
+    std::string::const_iterator it = s.begin();
+    while (it != s.end() && std::isdigit(*it))
+        ++it;
+    return !s.empty() && it == s.end();
 }
 
 int GetPort(
@@ -52,13 +57,21 @@ int GetPort(
 
     std::string url_new = url.substr(found + 3); // url_new is the url excluding the http part
     size_t found1 = url_new.find_first_of(":");
-    std::string host = url_new.substr(0, found1);
 
     size_t found2 = url_new.find_first_of("/");
     std::string port = url_new.substr(found1 + 1, found2 - found1 - 1);
-    std::string path = url_new.substr(found2);
 
-    return std::stoi(port);
+    if (is_number(port))
+    {
+        return std::stoi(port);
+    }
+
+    if (protocol == "https")
+    {
+        return INTERNET_DEFAULT_HTTPS_PORT;
+    }
+
+    return INTERNET_DEFAULT_HTTP_PORT;
 }
 
 std::string GetHeaders(
@@ -127,7 +140,13 @@ std::shared_ptr<HttpResponseMessage> HttpMessageHandler::Send(
         0);
 
     auto header = GetHeaders(request);
-    auto content = request->Content->ReadAsString();
+    std::string content;
+
+    if (request->Content != nullptr)
+    {
+        content = request->Content->ReadAsString();
+    }
+
     auto sendRequest = HttpSendRequest(
         hrequest,
         header.c_str(),
