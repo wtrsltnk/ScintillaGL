@@ -19,6 +19,10 @@ target_sources(Demo
         "editorcomponent.hpp"
         "filerunnerservice.cpp"
         "filerunnerservice.hpp"
+        "filerunnerservice.http.cpp"
+        "filerunnerservice.mssql.cpp"
+        "filerunnerservice.mysql.cpp"
+        "filerunnerservice.sqlite.cpp"
         "filesystembrowsercomponent.cpp"
         "filesystembrowsercomponent.hpp"
         "filesystemservice.cpp"
@@ -37,6 +41,8 @@ target_sources(Demo
         "splittercomponent.hpp"
         "stb_truetype.h"
         "stbtt_font.hpp"
+        "stringhelpers.cpp"
+        "stringhelpers.hpp"
         "tabbededitorscomponent.cpp"
         "tabbededitorscomponent.hpp"
 )
@@ -63,6 +69,7 @@ target_link_libraries(Demo
         scintilla
         tinycc
         httpclient
+        sqlite
         winmm.lib
         opengl32.lib
         imm32.lib

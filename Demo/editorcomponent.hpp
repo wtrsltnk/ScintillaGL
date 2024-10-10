@@ -51,6 +51,7 @@ private:
     EditorEx mMainEditor;
     std::mutex _contentLoadMutex;
     std::string _contentToLoad;
+    bool _contentIsLoading = false;
 
     int _fontSize = 20;
 

@@ -23,8 +23,28 @@ public:
         const std::string &content);
 
 private:
+    std::string ExecuteSql(
+        const std::string &firstLine,
+        const std::vector<std::string> &lines);
+
+    std::string ExecuteSqlite(
+        const std::string &connectionString,
+        const std::map<std::string, std::string> &headers,
+        const std::vector<std::string> &lines);
+
+    std::string ExecuteMssql(
+        const std::string &connectionString,
+        const std::map<std::string, std::string> &headers,
+        const std::vector<std::string> &lines);
+
+    std::string ExecuteMysql(
+        const std::string &connectionString,
+        const std::map<std::string, std::string> &headers,
+        const std::vector<std::string> &lines);
+
     std::string ExecuteHttp(
-        const std::string &content);
+        const std::string &firstLine,
+        const std::vector<std::string> &lines);
 
     std::shared_ptr<HttpContent> ParseRequestContent(
         const std::vector<std::string> &lines);

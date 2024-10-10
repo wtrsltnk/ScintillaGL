@@ -58,4 +58,5 @@ add_library(ScintillaGL INTERFACE
 
 add_subdirectory(httpclient)
 add_subdirectory(scintilla)
+add_subdirectory(sqlite)
 add_subdirectory(Demo)

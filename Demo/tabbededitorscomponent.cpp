@@ -405,6 +405,22 @@ bool TabbedEditorsComponent::handleKeyDown(
                 }
                 break;
             }
+            case SDLK_x:
+            {
+                if (inputState.alt)
+                {
+                    auto activeTab = tabs[_activeTab];
+
+                    std::stringstream ss;
+                    ss << activeTab->title << " - response";
+                    auto addedTab = newTab(ss.str());
+
+                    addedTab->loadContentAsync(activeTab->title, activeTab->getContent());
+
+                    return true;
+                }
+                break;
+            }
             case SDLK_TAB:
             {
                 if (_controlMode)
@@ -459,19 +475,6 @@ bool TabbedEditorsComponent::handleKeyUp(
     }
     else if (!tabs.empty() && tabs.size() > _activeTab)
     {
-        if (event.keysym.sym == SDLK_x && inputState.alt)
-        {
-            auto activeTab = tabs[_activeTab];
-
-            std::stringstream ss;
-            ss << activeTab->title << " - response";
-            auto addedTab = newTab(ss.str());
-
-            addedTab->loadContentAsync(activeTab->title, activeTab->getContent());
-
-            return true;
-        }
-
         return tabs[_activeTab]->handleKeyUp(event, inputState);
     }
 
@@ -543,6 +546,7 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
                 LocalMenuItem("Close all tabs"),
                 LocalMenuItem("Add c-file"),
                 LocalMenuItem("Add http-file"),
+                LocalMenuItem("Add sql-file"),
             };
 
             HamburgerMenuItems[0].action = [&]() {
@@ -557,6 +561,11 @@ bool TabbedEditorsComponent::handleMouseButtonInput(
 
             HamburgerMenuItems[2].action = [&]() {
                 newTab("empty.http", true);
+                _closeHamburgerMenu = true;
+            };
+
+            HamburgerMenuItems[3].action = [&]() {
+                newTab("empty.sql", true);
                 _closeHamburgerMenu = true;
             };
 

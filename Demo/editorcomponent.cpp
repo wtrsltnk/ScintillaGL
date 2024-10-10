@@ -1,7 +1,10 @@
 
 #include "editorcomponent.hpp"
 
+#include "screen-utils.hpp"
+#include <chrono>
 #include <glad/glad.h>
+#include <math.h>
 
 class LexState : public LexInterface
 {
@@ -120,12 +123,14 @@ void runThread(
 
     std::lock_guard<std::mutex> lk(thiz->_contentLoadMutex);
     thiz->_contentToLoad = res;
+    thiz->_contentIsLoading = false;
 }
 
 void EditorComponent::loadContentAsync(
     const std::string &title,
     const std::string &content)
 {
+    _contentIsLoading = true;
     std::thread t(runThread, this, title, content);
     t.detach();
 }
@@ -166,6 +171,7 @@ bool EditorComponent::init(
 void EditorComponent::render(
     const struct InputState &inputState)
 {
+    bool contentIsLoading = false;
     {
         std::lock_guard<std::mutex> lk(_contentLoadMutex);
         if (!_contentToLoad.empty())
@@ -180,6 +186,7 @@ void EditorComponent::render(
             mMainEditor.Command(SCI_GOTOPOS, 0);
             _contentToLoad.clear();
         }
+        contentIsLoading = _contentIsLoading;
     }
 
     (void)inputState;
@@ -190,7 +197,71 @@ void EditorComponent::render(
     glPushMatrix();
     glTranslatef(_origin.x, _origin.y, 0);
 
-    mMainEditor.Paint();
+    const glm::vec2 offsets[9] = {
+        glm::vec2(-20.0f, -20.0f),
+        glm::vec2(0.0f, -20.0f),
+        glm::vec2(20.0f, -20.0f),
+
+        glm::vec2(-20.0f, 0.0f),
+        glm::vec2(0.0f, 0.0f),
+        glm::vec2(20.0f, 0.0f),
+
+        glm::vec2(-20.0f, 20.0f),
+        glm::vec2(0.0f, 20.0f),
+        glm::vec2(20.0f, 20.0f),
+    };
+
+    const glm::vec4 colors[9] = {
+        glm::vec4(224.0f / 255.0f, 91.0f / 255.0f, 100.0f / 255.0f, 255.0f),
+        glm::vec4(243.0f / 255.0f, 126.0f / 255.0f, 96.0f / 255.0f, 255.0f),
+        glm::vec4(248.0f / 255.0f, 178.0f / 255.0f, 106.0f / 255.0f, 255.0f),
+
+        glm::vec4(243.0f / 255.0f, 126.0f / 255.0f, 96.0f / 255.0f, 255.0f),
+        glm::vec4(248.0f / 255.0f, 178.0f / 255.0f, 106.0f / 255.0f, 255.0f),
+        glm::vec4(171.0f / 255.0f, 189.0f / 255.0f, 129.0f / 255.0f, 255.0f),
+
+        glm::vec4(248.0f / 255.0f, 178.0f / 255.0f, 106.0f / 255.0f, 255.0f),
+        glm::vec4(171.0f / 255.0f, 189.0f / 255.0f, 129.0f / 255.0f, 255.0f),
+        glm::vec4(132.0f / 255.0f, 155.0f / 255.0f, 135.0f / 255.0f, 255.0f),
+    };
+
+    static unsigned __int64 initNow = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+    if (contentIsLoading)
+    {
+        const float pi = 3.14;
+        const float frequency = 0.5f; // Frequency in Hz
+        unsigned __int64 now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+        auto time = (now - initNow) / 1000.f;
+
+        for (int i = 0; i < 9; i++)
+        {
+            glPushMatrix();
+            glTranslatef(offsets[i].x, offsets[i].y, 0.0f);
+
+            float scale = 10.0f * (0.4f + (0.2 * (1 + sin((1 + i) * pi * frequency * time))));
+
+            float gray = (10.0f - (i + (i % 3))) * 25.5f;
+            auto color = glm::vec4(gray / 295.0f, gray / 275.0f, gray / 255.0f, 255.0f);
+
+            scr::Rectangle rc = {
+                (_width / 2.0f) - scale,
+                (_width / 2.0f) + scale,
+                (_height / 2.0f) - scale,
+                (_height / 2.0f) + scale,
+            };
+
+            scr::FillQuad(color, rc);
+
+            glPopMatrix();
+        }
+    }
+    else
+    {
+        mMainEditor.Paint();
+    }
+
     glPopMatrix();
 
     _scrollBarLayer.render(inputState);
