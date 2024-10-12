@@ -43,6 +43,11 @@ public:
         const std::string &title,
         bool switchTo = true);
 
+    std::shared_ptr<EditorComponent> newTabWithContent(
+        const std::string &title,
+        bool switchTo,
+        const std::string &content);
+
     void closeTab(
         size_t index);
 

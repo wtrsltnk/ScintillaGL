@@ -53,7 +53,8 @@ private:
     std::string _contentToLoad;
     bool _contentIsLoading = false;
 
-    int _fontSize = 20;
+    const int defaultFontSize = 14;
+    int _fontSize = defaultFontSize;
 
     std::unique_ptr<class LexState> mLexer;
 

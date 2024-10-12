@@ -1,7 +1,9 @@
 
 #include "tabbededitorscomponent.hpp"
 
+#include "filesystemservice.hpp"
 #include "font-utils.hpp"
+#include "stringhelpers.hpp"
 #include <filesystem>
 #include <fstream>
 #include <glad/glad.h>
@@ -95,6 +97,27 @@ void TabbedEditorsComponent::loadFile(
     tabs.push_back(std::move(editorLayer));
 
     SelectActiveTab(tabs.size() - 1);
+}
+
+std::shared_ptr<EditorComponent> TabbedEditorsComponent::newTabWithContent(
+    const std::string &title,
+    bool switchTo,
+    const std::string &content)
+{
+    auto editorLayer = std::make_shared<EditorComponent>(_fileRunnerService);
+    editorLayer->init(glm::vec2(_origin.x, _origin.y + TabRowHeight()));
+    editorLayer->resize(_origin.x, _origin.y + TabRowHeight(), _width, _height - TabRowHeight());
+    editorLayer->title = title;
+    editorLayer->loadContent(content);
+
+    tabs.push_back(editorLayer);
+
+    if (switchTo)
+    {
+        SelectActiveTab(tabs.size() - 1);
+    }
+
+    return editorLayer;
 }
 
 std::shared_ptr<EditorComponent> TabbedEditorsComponent::newTab(
@@ -400,6 +423,59 @@ bool TabbedEditorsComponent::handleKeyDown(
                 if (inputState.ctrl)
                 {
                     newTab("empty.c", true);
+
+                    return true;
+                }
+                break;
+            }
+            case SDLK_f:
+            {
+                if (inputState.ctrl && inputState.shift)
+                {
+                    std::stringstream content;
+
+                    content << R"a(//
+// Search with C
+// change the "needle" and "searchPath" values and
+// run the file with alt+x
+//
+#include <string.h>
+
+#define SHOW_FILE_SIZE 1
+#define SHOW_FILE_TIME 2
+#define SHOW_FILE_PERMISSIONS 4
+
+// Flags used in the search
+int searchFlags = SHOW_FILE_SIZE | SHOW_FILE_TIME;
+
+// The directory to search from
+const char* searchPath = ")a";
+                    auto root = FileSystem.GetRoot().string();
+
+                    root = escaped(root);
+                    content << root;
+                    content << R"a(";
+
+// The text that must be in file path to return a file
+const char* needle = "test";
+
+// Function that is called when starting a search
+const char* init(int *flags)
+{
+    *flags = searchFlags;
+
+    return searchPath;
+}
+
+// Function called for every path found in the search directory to determin
+// if the file should return in the results
+int filter(const char* path)
+{
+    return strstr(path, needle) != 0;
+}
+)a";
+
+                    newTabWithContent("search.c", true, content.str());
 
                     return true;
                 }

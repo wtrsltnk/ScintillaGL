@@ -127,3 +127,45 @@ std::map<std::string, std::string> ParseHeaders(
 
     return headers;
 }
+
+std::string escaped(
+    const std::string &input)
+{
+    std::string output;
+    output.reserve(input.size());
+    for (const char c : input)
+    {
+        switch (c)
+        {
+            case '\\':
+                output += "\\\\";
+                break;
+            case '\a':
+                output += "\\a";
+                break;
+            case '\b':
+                output += "\\b";
+                break;
+            case '\f':
+                output += "\\f";
+                break;
+            case '\n':
+                output += "\\n";
+                break;
+            case '\r':
+                output += "\\r";
+                break;
+            case '\t':
+                output += "\\t";
+                break;
+            case '\v':
+                output += "\\v";
+                break;
+            default:
+                output += c;
+                break;
+        }
+    }
+
+    return output;
+}

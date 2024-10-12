@@ -211,20 +211,6 @@ void EditorComponent::render(
         glm::vec2(20.0f, 20.0f),
     };
 
-    const glm::vec4 colors[9] = {
-        glm::vec4(224.0f / 255.0f, 91.0f / 255.0f, 100.0f / 255.0f, 255.0f),
-        glm::vec4(243.0f / 255.0f, 126.0f / 255.0f, 96.0f / 255.0f, 255.0f),
-        glm::vec4(248.0f / 255.0f, 178.0f / 255.0f, 106.0f / 255.0f, 255.0f),
-
-        glm::vec4(243.0f / 255.0f, 126.0f / 255.0f, 96.0f / 255.0f, 255.0f),
-        glm::vec4(248.0f / 255.0f, 178.0f / 255.0f, 106.0f / 255.0f, 255.0f),
-        glm::vec4(171.0f / 255.0f, 189.0f / 255.0f, 129.0f / 255.0f, 255.0f),
-
-        glm::vec4(248.0f / 255.0f, 178.0f / 255.0f, 106.0f / 255.0f, 255.0f),
-        glm::vec4(171.0f / 255.0f, 189.0f / 255.0f, 129.0f / 255.0f, 255.0f),
-        glm::vec4(132.0f / 255.0f, 155.0f / 255.0f, 135.0f / 255.0f, 255.0f),
-    };
-
     static unsigned __int64 initNow = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
     if (contentIsLoading)
@@ -368,7 +354,7 @@ bool EditorComponent::handleKeyDown(
             sciKey = '0';
             if (inputState.ctrl)
             {
-                _fontSize = 20;
+                _fontSize = defaultFontSize;
                 initialiseShaderEditor();
             }
             break;

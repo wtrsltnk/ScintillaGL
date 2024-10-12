@@ -18,6 +18,7 @@ target_sources(Demo
         "editorcomponent.cpp"
         "editorcomponent.hpp"
         "filerunnerservice.cpp"
+        "filerunnerservice.c.cpp"
         "filerunnerservice.hpp"
         "filerunnerservice.http.cpp"
         "filerunnerservice.mssql.cpp"

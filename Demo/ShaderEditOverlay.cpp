@@ -45,7 +45,7 @@ void ShaderEditOverlay::initialise(int w, int h)
 {
     const char *fontName = "C:\\Windows\\Fonts\\consola.ttf";
 
-    FontParameters fp(fontName, 16, 400, false, 0, 0);
+    FontParameters fp(fontName, 14, 400, false, 0, 0);
     localFont = std::make_unique<Font>();
     localFont->Create(fp);
 

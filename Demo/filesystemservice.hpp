@@ -15,6 +15,8 @@ public:
     void SetRoot(
         const fspath &root);
 
+    const fspath &GetRoot() const { return _rootPath; }
+
     std::vector<fspath> GetFolders(
         const fspath &path,
         bool updateCache = false);

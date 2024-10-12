@@ -19,6 +19,7 @@ std::string Return(
 
 std::string FileRunnerService::ExecuteHttp(
     const std::string &firstLine,
+    const std::map<std::string, std::string> &headers,
     const std::vector<std::string> &lines)
 {
     HttpClient client;
@@ -34,17 +35,17 @@ std::string FileRunnerService::ExecuteHttp(
 
     if (iequals(firstLine.substr(0, 4), "post"))
     {
-        return Return(client.Post(url, ParseRequestContent(lines)));
+        return Return(client.Post(url, ParseRequestContent(headers, lines)));
     }
 
     if (iequals(firstLine.substr(0, 4), "put"))
     {
-        return Return(client.Put(url, ParseRequestContent(lines)));
+        return Return(client.Put(url, ParseRequestContent(headers, lines)));
     }
 
     if (iequals(firstLine.substr(0, 4), "patch"))
     {
-        return Return(client.Patch(url, ParseRequestContent(lines)));
+        return Return(client.Patch(url, ParseRequestContent(headers, lines)));
     }
 
     if (iequals(firstLine.substr(0, 4), "delete"))
@@ -56,13 +57,11 @@ std::string FileRunnerService::ExecuteHttp(
 }
 
 std::shared_ptr<HttpContent> FileRunnerService::ParseRequestContent(
+    const std::map<std::string, std::string> &headers,
     const std::vector<std::string> &lines)
 {
-    size_t headersEndAt;
-    auto headers = ParseHeaders(lines, headersEndAt);
-
     std::ostringstream imploded;
-    std::copy(lines.begin() + headersEndAt, lines.end(),
+    std::copy(lines.begin(), lines.end(),
               std::ostream_iterator<std::string>(imploded, "\n"));
 
     auto httpContent = std::make_shared<StringContent>(imploded.str());

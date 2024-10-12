@@ -24,15 +24,25 @@ std::string FileRunnerService::Execute(
 
     auto firstLine = lines.front();
     lines.erase(lines.begin());
+    trimComment(firstLine);
+
+    size_t headersEndAt;
+    auto headers = ParseHeaders(lines, headersEndAt);
+    auto linesWithoutHeaders = std::vector<std::string>(lines.begin() + headersEndAt, lines.end());
 
     if (ext == ".http")
     {
-        return ExecuteHttp(firstLine, lines);
+        return ExecuteHttp(firstLine, headers, linesWithoutHeaders);
     }
 
     if (ext == ".sql")
     {
-        return ExecuteSql(firstLine, lines);
+        return ExecuteSql(firstLine, headers, linesWithoutHeaders);
+    }
+
+    if (ext == ".c")
+    {
+        return ExecuteC(firstLine, headers, linesWithoutHeaders);
     }
 
     return "Unsupported file extension";
@@ -40,6 +50,7 @@ std::string FileRunnerService::Execute(
 
 std::string FileRunnerService::ExecuteSql(
     const std::string &firstLine,
+    const std::map<std::string, std::string> &headers,
     const std::vector<std::string> &lines)
 {
     auto sqlType = firstLine;
@@ -55,23 +66,19 @@ std::string FileRunnerService::ExecuteSql(
     auto connectionString = sqlType.substr(firstSpace);
     trim(connectionString);
 
-    size_t headersEndAt;
-    auto headers = ParseHeaders(lines, headersEndAt);
-    auto linesWithoutHeaders = std::vector<std::string>(lines.begin() + headersEndAt, lines.end());
-
     if (iequals(sqlType.substr(0, 6), "sqlite"))
     {
-        return ExecuteSqlite(connectionString, headers, linesWithoutHeaders);
+        return ExecuteSqlite(connectionString, headers, lines);
     }
 
     if (iequals(sqlType.substr(0, 5), "mssql"))
     {
-        return ExecuteMssql(connectionString, headers, linesWithoutHeaders);
+        return ExecuteMssql(connectionString, headers, lines);
     }
 
     if (iequals(sqlType.substr(0, 5), "mysql"))
     {
-        return ExecuteMysql(connectionString, headers, linesWithoutHeaders);
+        return ExecuteMysql(connectionString, headers, lines);
     }
 
     return "empty";

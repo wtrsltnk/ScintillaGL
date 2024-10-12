@@ -44,7 +44,7 @@ if (tinycc_ADDED)
     target_include_directories(tinycc
         PUBLIC
             "${tinycc_BINARY_DIR}"
-            # "${tinycc_SOURCE_DIR}/include"
+            "${tinycc_SOURCE_DIR}"
     )
 
 endif()

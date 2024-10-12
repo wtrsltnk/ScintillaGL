@@ -25,6 +25,7 @@ public:
 private:
     std::string ExecuteSql(
         const std::string &firstLine,
+        const std::map<std::string, std::string> &headers,
         const std::vector<std::string> &lines);
 
     std::string ExecuteSqlite(
@@ -44,9 +45,16 @@ private:
 
     std::string ExecuteHttp(
         const std::string &firstLine,
+        const std::map<std::string, std::string> &headers,
+        const std::vector<std::string> &lines);
+
+    std::string ExecuteC(
+        const std::string &firstLine,
+        const std::map<std::string, std::string> &headers,
         const std::vector<std::string> &lines);
 
     std::shared_ptr<HttpContent> ParseRequestContent(
+        const std::map<std::string, std::string> &headers,
         const std::vector<std::string> &lines);
 };
 
