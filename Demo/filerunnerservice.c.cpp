@@ -106,7 +106,7 @@ std::string FileRunnerService::ExecuteC(
     int flags = 0;
     auto initResult = init(&flags);
 
-    result << "searching for \"" << initResult << "\"\n\n";
+    result << "Searching in \"" << initResult << "\":\n\n";
     try
     {
         auto itr = std::filesystem::recursive_directory_iterator(initResult, std::filesystem::directory_options::skip_permission_denied);
@@ -123,7 +123,7 @@ std::string FileRunnerService::ExecuteC(
             {
                 if (flags & SHOW_FILE_SIZE)
                 {
-                    result << std::setw(10) << std::filesystem::file_size(entry.path()) << " | ";
+                    result << std::setw(10) << std::filesystem::file_size(entry.path()) << std::setw(0) << " | ";
                 }
 
                 if (flags & SHOW_FILE_TIME)
