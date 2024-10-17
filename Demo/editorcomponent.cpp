@@ -429,9 +429,22 @@ bool EditorComponent::handleMouseButtonInput(
 
     if (_scrollBarLayer.handleMouseButtonInput(event, inputState)) return true;
 
-    if (event.state == SDL_PRESSED)
+    if (event.state == SDL_PRESSED && event.button == SDL_BUTTON_LEFT)
     {
-        mMainEditor.StartSelectionxy(event.x - _origin.x, event.y - _origin.y);
+        static std::chrono::time_point<std::chrono::system_clock> lastClick = std::chrono::system_clock::now();
+
+        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - lastClick);
+
+        if (diff.count() == 0 || diff.count() > 300)
+        {
+            mMainEditor.StartSelectionxy(event.x - _origin.x, event.y - _origin.y);
+        }
+        else
+        {
+            mMainEditor.DoubleClickWord(event.x - _origin.x, event.y - _origin.y);
+        }
+
+        lastClick = std::chrono::system_clock::now();
     }
 
     return false;

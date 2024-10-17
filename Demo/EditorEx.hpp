@@ -71,6 +71,8 @@ public:
         int height);
 
     void Reset();
+
+    void DoubleClickWord(int x, int y);
 };
 
 #endif // EDITOREX_HPP

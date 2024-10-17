@@ -45,3 +45,13 @@ void EditorEx::Reset()
     Command(SCI_SETFOCUS, true);
     Command(SCI_SETHSCROLLBAR, true);
 }
+
+void EditorEx::DoubleClickWord(int x, int y)
+{
+    auto pos = PositionFromLocation(Point(x, y));
+
+    auto before = pdoc->NextWordStart(pos, -1);
+    auto after = pdoc->NextWordEnd(pos, 1);
+
+    SetSelection(before, after);
+}
