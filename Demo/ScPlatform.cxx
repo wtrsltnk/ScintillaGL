@@ -552,14 +552,16 @@ void Font::Create(
     len = ftell(f);
     fseek(f, 0, SEEK_SET);
 
+    const int imageSize = 512;
+
     unsigned char *buf = (unsigned char *)malloc(len);
-    unsigned char *bmp = new unsigned char[512 * 512];
+    unsigned char *bmp = new unsigned char[imageSize * imageSize];
     fread(buf, 1, len, f);
-    stbtt_BakeFontBitmap(buf, 0, fp.size, bmp, 512, 512, 32, 96, newFont->cdata); // no guarantee this fits!
+    stbtt_BakeFontBitmap(buf, 0, fp.size, bmp, imageSize, imageSize, 32, 96, newFont->cdata); // no guarantee this fits!
     // can free ttf_buffer at this point
     glGenTextures(1, &newFont->ftex);
     glBindTexture(GL_TEXTURE_2D, newFont->ftex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 512, 512, 0, GL_ALPHA, GL_UNSIGNED_BYTE, bmp);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, imageSize, imageSize, 0, GL_ALPHA, GL_UNSIGNED_BYTE, bmp);
     // can free temp_bitmap at this point
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     fclose(f);

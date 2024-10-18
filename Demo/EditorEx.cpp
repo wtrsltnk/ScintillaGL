@@ -46,6 +46,12 @@ void EditorEx::Reset()
     Command(SCI_SETHSCROLLBAR, true);
 }
 
+void EditorEx::ClickText(int x, int y)
+{
+    _startPos = PositionFromLocation(Point(x, y));
+    SetSelection(_startPos, _startPos);
+}
+
 void EditorEx::DoubleClickWord(int x, int y)
 {
     auto pos = PositionFromLocation(Point(x, y));
@@ -53,5 +59,33 @@ void EditorEx::DoubleClickWord(int x, int y)
     auto before = pdoc->NextWordStart(pos, -1);
     auto after = pdoc->NextWordEnd(pos, 1);
 
-    SetSelection(before, after);
+    SetSelection(after, before);
+}
+
+void EditorEx::DoubleClickExtendedWord(int x, int y)
+{
+    auto pos = PositionFromLocation(Point(x, y));
+
+    auto before = pdoc->LineStart(pos);
+    auto after = pdoc->LineEnd(pos);
+
+    SetSelection(after, before);
+}
+
+void EditorEx::OnMouseMoveSelection(int x, int y)
+{
+    auto pos = PositionFromLocation(Point(x, y));
+
+    if (pos < _startPos)
+    {
+        SetSelection(
+            pdoc->NextWordStart(pos, -1),
+            pdoc->NextWordEnd(_startPos, 1));
+    }
+    else
+    {
+        SetSelection(
+            pdoc->NextWordStart(_startPos, -1),
+            pdoc->NextWordEnd(pos, 1));
+    }
 }

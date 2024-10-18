@@ -72,7 +72,12 @@ public:
 
     void Reset();
 
+    void ClickText(int x, int y);
     void DoubleClickWord(int x, int y);
+    void DoubleClickExtendedWord(int x, int y);
+    void OnMouseMoveSelection(int x, int y);
+
+    int _startPos;
 };
 
 #endif // EDITOREX_HPP

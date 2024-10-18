@@ -437,7 +437,7 @@ bool EditorComponent::handleMouseButtonInput(
 
         if (diff.count() == 0 || diff.count() > 300)
         {
-            mMainEditor.StartSelectionxy(event.x - _origin.x, event.y - _origin.y);
+            mMainEditor.ClickText(event.x - _origin.x, event.y - _origin.y);
         }
         else
         {
@@ -465,7 +465,14 @@ bool EditorComponent::handleMouseMotionInput(
 
     if (event.state == SDL_PRESSED)
     {
-        mMainEditor.ChangeSelectionxy(event.x - _origin.x, event.y - _origin.y);
+        if (inputState.ctrl)
+        {
+            mMainEditor.OnMouseMoveSelection(event.x - _origin.x, event.y - _origin.y);
+        }
+        else
+        {
+            mMainEditor.ChangeSelectionxy(event.x - _origin.x, event.y - _origin.y);
+        }
     }
 
     return false;
