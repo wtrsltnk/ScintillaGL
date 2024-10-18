@@ -1,3 +1,10 @@
+# Code example with syntax highlighting from Scintilla
+
+![Screenshot](./screenshot.png)
+
+Below the original README:
+
+-------
 Building
 ===================================
 
