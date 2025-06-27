@@ -9,7 +9,7 @@
 #include <glad/glad.h>
 #include <sstream>
 
-const int tabBarHeight = 40;
+const int tabBarHeight = 36;
 const char HamburgerButtonText[] = {32, 0};
 const char BackButtonText[] = {33, 0};
 const char NextButtonText[] = {34, 0};
@@ -33,7 +33,7 @@ bool TabbedEditorsComponent::init(
 {
     _origin = origin;
 
-    tabMargin.Bottom = tabMargin.Top = 4;
+    tabMargin.Bottom = tabMargin.Top = 2;
     tabMargin.Left = 0;
     tabMargin.Right = 2;
 

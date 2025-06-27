@@ -364,8 +364,10 @@ bool EditorComponent::handleKeyDown(
         case SDLK_RALT:
         case SDLK_LCTRL:
         case SDLK_RCTRL:
+        {
             sciKey = 0;
             break;
+        }
         default:
         {
             sciKey = event.keysym.sym;
@@ -375,6 +377,12 @@ bool EditorComponent::handleKeyDown(
 
     if (sciKey)
     {
+        if (sciKey == SDLK_f && inputState.ctrl && inputState.shift)
+        {
+
+            return true;
+        }
+
         bool consumed;
         mMainEditor.KeyDown(
             (SDLK_a <= sciKey && sciKey <= SDLK_z) ? sciKey - 'a' + 'A' : sciKey,
